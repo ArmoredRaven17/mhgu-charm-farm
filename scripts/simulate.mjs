@@ -65,6 +65,7 @@ function runProfile(profile, seed) {
   const variantKills = {};      // variant id -> kills
   const oreGained = {};         // ore id -> total mined
   const buyTimes = [];          // second of every purchase, for pacing
+  let charmsRolled = 0, gods = 0, firstGod = null, clock = 0;
   const times = {};             // milestone -> second reached
   const firstBuy = {};          // upgrade id -> second of first purchase
   const levelAt = {};           // upgrade id -> {5: sec, 10: sec, 25: sec}
@@ -83,6 +84,8 @@ function runProfile(profile, seed) {
       variantKills[res.variant.id] = (variantKills[res.variant.id] || 0) + 1;
       for (const id in res.ores) oreGained[id] = (oreGained[id] || 0) + res.ores[id];
       for (const c of res.charms) {
+        charmsRolled++;
+        if (ROLL.isGod(c)) { gods++; if (firstGod === null) firstGod = clock; }
         if (box.length >= BOX_CAP) { lostToFullBox++; continue; }
         box.push({ c, v: ROLL.charmValue(c) });
       }
@@ -93,6 +96,7 @@ function runProfile(profile, seed) {
   const avgHit = () => FARM.clickDamage() * (1 + FARM.critChance() * (FARM.critMult() - 1));
 
   for (let t = 1; t <= SECONDS; t++) {
+    clock = t;
     // ── Damage for this second ────────────────────────────────────────────────
     // Clicks and hired hunters both use click damage; Palicoes add flat DPS.
     let budget = (profile.cps + FARM.autoClicks()) * avgHit() + FARM.dps();
@@ -187,6 +191,7 @@ function runProfile(profile, seed) {
     // >>1 means you're sitting on far more money than the next purchase needs.
     bankRatio: bankRatioN ? Math.round(bankRatioSum / bankRatioN) : 0,
     times, firstBuy, levelAt, variantKills, oreGained,
+    charmsRolled, gods, firstGod,
     // Pacing: how often a purchase actually lands, and the worst dry spell.
     buys: buyTimes.length,
     gaps: (() => {
@@ -230,6 +235,9 @@ for (const p of PROFILES) {
       `first ${fmt(r.firstBuy[u.id]).padStart(6)}  ` +
       `Lv5 ${fmt(la[5]).padStart(6)}  Lv10 ${fmt(la[10]).padStart(6)}  Lv25 ${fmt(la[25]).padStart(6)}`);
   }
+  console.log(`   god charms: ${r.gods} in ${r.charmsRolled.toLocaleString()} drops` +
+    (r.gods ? ` · first at ${fmt(r.firstGod)}` : ` · none yet`) +
+    ` · 1 in ${r.gods ? Math.round(r.charmsRolled / r.gods).toLocaleString() : '—'}`);
   console.log(`   pacing: ${r.buys} purchases · median gap ${fmt(r.gaps.median)} · worst dry spell ${fmt(r.gaps.worst)} · ${r.gaps.lastHourBuys} in the final hour`);
   console.log(`   ore mined (by unlock rank):`);
   for (const rank of [0, 1, 2]) {
