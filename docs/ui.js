@@ -116,9 +116,9 @@ window.UI = (function () {
   // and angle vary per hit so a fast run doesn't look like one repeating stamp, and
   // each mark removes itself on animationend so nothing accumulates however quickly
   // the hits come.
-  function slash(crit) {
+  function slash(crit, palico) {
     const el = document.createElement("div");
-    el.className = "slash" + (crit ? " crit" : "");
+    el.className = "slash" + (crit ? " crit" : "") + (palico ? " palico" : "");
     el.style.left = (26 + Math.random() * 48) + "%";
     el.style.top = (26 + Math.random() * 48) + "%";
     el.style.setProperty("--a", Math.round(Math.random() * 120 - 60) + "deg");
@@ -133,7 +133,7 @@ window.UI = (function () {
   // arrived in later games. The slash is the whole of the feedback.
   function showHit(res) {
     if (!res) return;
-    slash(res.crit);
+    slash(res.crit, res.palico);
   }
   const hitFlash = () => slash(false);      // kept for anything still calling it
 

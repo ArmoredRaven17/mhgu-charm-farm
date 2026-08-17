@@ -178,6 +178,26 @@ kbd{
   box-shadow:0 0 12px rgba(255,90,180,.95);
   animation-duration:.34s
 }
+/* The Palico's contribution — a claw swipe rather than a weapon stroke, so it reads as
+   someone else helping rather than as one of your own blows. Three small white marks
+   in parallel: the element itself is the middle claw and the two pseudo-elements are
+   the outer pair, offset perpendicular to the stroke. They sit inside the parent's
+   rotation, so the group stays parallel at whatever angle the swipe landed, and inside
+   its transform, so they sweep out together on the same animation.
+   The outer two are shorter, because a claw mark that's a perfect rectangle of three
+   equal lines reads as a barcode. */
+.slash.palico{
+  width:26%;height:2px;
+  background:linear-gradient(90deg,transparent,#ffffff 22%,#ffffff 78%,transparent);
+  box-shadow:0 0 5px rgba(255,255,255,.7);
+  animation-duration:.22s
+}
+.slash.palico::before,.slash.palico::after{
+  content:"";position:absolute;left:12%;right:12%;height:2px;
+  background:inherit;box-shadow:inherit;border-radius:3px
+}
+.slash.palico::before{top:-5px}
+.slash.palico::after{top:5px}
 @keyframes slashcut{
   0%  {opacity:0;transform:translate(-50%,-50%) rotate(var(--a,0deg)) scaleX(.2)}
   30% {opacity:1;transform:translate(-50%,-50%) rotate(var(--a,0deg)) scaleX(1)}

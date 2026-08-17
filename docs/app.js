@@ -336,6 +336,10 @@
     // A hired hunter's attack should look like an attack — same flash and floating
     // number a click gets, so you can see the crits they land.
     onAutoClick: res => { UI.showHit(res); },
+    // A Palico never crits — its damage is a flat trickle — so it lands as an ordinary
+    // mark. Silenced during offline catch-up like the other hooks, or coming back to
+    // the tab would paint hours of them at once.
+    onPalicoHit: () => { if (!quiet) UI.showHit({ crit: false, palico: true }); },
     onChange: () => {
       if (quiet) return;
       UI.renderArena(); UI.renderOres(); UI.renderShop();
