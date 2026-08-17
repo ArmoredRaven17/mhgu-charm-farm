@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "charm-farm",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8132", "--directory", "docs"],
+      "port": 8132
+    }
+  ]
+}

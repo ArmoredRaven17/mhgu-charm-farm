@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MHGU Charm Farm</title>
+<link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
+<link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+<div id="app">
+
+  <!-- Title bar -->
+  <header class="titlebar titlebar-header">
+    <img class="title-icon" id="titleIcon" src="assets/MonsterIcons/MHGU-Brachydios_Icon.webp" alt="">
+    <h1>MHGU Charm Farm</h1>
+    <span id="zennyPill" class="progress-pill first" title="Zenny">0z</span>
+    <span id="capacityPill" class="progress-pill" title="Charms in the box">0 / 500</span>
+    <button id="saveBtn"   class="btn tiny">Save <span id="dirtyDot" class="dirty-dot hidden">●</span></button>
+    <button id="saveAsBtn" class="btn tiny">Save As…</button>
+    <button id="openBtn"   class="btn tiny">Open…</button>
+    <input type="file" id="importFile" accept=".json,application/json" class="hidden">
+    <button id="helpBtn" class="icon-btn" title="Controls" aria-label="Controls">?</button>
+    <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings">&#9881;</button>
+    <button id="linksBtn" class="icon-btn" title="Other MHGU apps" aria-label="Other MHGU apps">&#128279;</button>
+    <button id="aboutBtn" class="icon-btn" title="About / Attributions" aria-label="About">&#9432;</button>
+  </header>
+
+  <div class="farm-layout">
+
+    <!-- Arena + ore stock + shop -->
+    <aside class="farm-col arena-col">
+      <div class="arena">
+        <div class="arena-name" id="arenaName">Brachydios</div>
+        <div class="arena-rank" id="arenaRank">Low Rank · 0 hunts</div>
+        <button type="button" class="arena-target" id="target" aria-label="Attack">
+          <img id="targetImg" src="assets/MonsterIcons/MHGU-Brachydios_Icon.webp" alt="">
+        </button>
+        <div class="hpbar">
+          <div class="hpbar-fill" id="hpFill" style="width:100%"></div>
+          <div class="hpbar-text" id="hpText">0 / 0</div>
+        </div>
+        <div class="arena-stats">
+          <span><b>Click</b> <i id="statDmg">1</i></span>
+          <span><b>Crit</b> <i id="statCrit">0%</i></span>
+          <span><b>Idle</b> <i id="statDps">0/s</i></span>
+          <span><b>Charms</b> <i id="statDrop">1</i></span>
+        </div>
+      </div>
+
+      <div class="panel-title">Ore stock</div>
+      <div class="ore-strip" id="oreStrip"></div>
+
+      <div class="panel-title">Smithy</div>
+      <div class="shop" id="shop"></div>
+    </aside>
+
+    <!-- Charm box -->
+    <div class="farm-col box-col">
+      <div class="box-nav">
+        <button id="prevPage" class="nav-btn">&lsaquo; Prev</button>
+        <span id="pageIndicator" class="page-indicator">Page 1 / 5</span>
+        <button id="nextPage" class="nav-btn">Next &rsaquo;</button>
+        <span class="spacer"></span>
+        <select id="sortKey" class="mini-select">
+          <option value="">— Sort by —</option>
+          <option value="rarity">Rarity</option>
+          <option value="slots">Slots</option>
+          <option value="value">Value</option>
+          <option value="skill">Skill points</option>
+          <option value="name">Skill name</option>
+        </select>
+        <button id="sortDir" class="nav-btn" title="Toggle sort direction">Desc ↓</button>
+        <button id="applySort" class="nav-btn" disabled>Apply Sort</button>
+        <button id="sellJunkBtn" class="nav-btn" title="Sell every charm at rarity 1–2">Sell Junk</button>
+        <button id="emptyBoxBtn" class="nav-btn">Empty Box</button>
+      </div>
+      <div class="box-grid-area">
+        <div id="grid" class="box-grid"></div>
+      </div>
+    </div>
+
+    <!-- Melding pot -->
+    <aside class="farm-col pot-col">
+      <div class="panel-title">Melding Pot</div>
+      <!-- Actions and status sit above the ten rows: the rows are tall enough to push
+           anything under them off a 720px screen, and these are the controls you
+           reach for most. -->
+      <div class="pot-actions">
+        <button id="autoFillBtn" class="nav-btn" title="Load rows from whatever you have three of">Auto-fill</button>
+        <button id="meldAllBtn" class="nav-btn" title="Meld every row that's ready">Meld All</button>
+        <button id="emptyPotBtn" class="nav-btn" title="Send every charm in the pot back to the box">Empty Pot</button>
+      </div>
+      <div class="pot-status" id="potStatus"></div>
+      <div class="pot" id="pot"></div>
+      <div class="detail" id="detail"></div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- Confirm -->
+<div id="confirmModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="confirmTitle">Confirm</h2>
+    <div id="confirmBody"></div>
+    <div class="row end gap">
+      <button id="confirmOk" class="btn">OK</button>
+      <button id="confirmCancel" class="btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Other MHGU apps dialog -->
+<div id="linksModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Other MHGU Apps</h2>
+    <p class="muted">Companion fan tools by the same author. Each opens in a new tab.</p>
+    <ul class="app-links">
+      <li>
+        <a href="https://armoredraven17.github.io/MHGU-Quest-Randomizer/" target="_blank" rel="noopener">Quest Randomizer</a>
+        <span class="app-desc">Rolls random quests when you can't decide what to hunt.</span>
+      </li>
+      <li>
+        <a href="https://armoredraven17.github.io/mhgu-collection-tracker/" target="_blank" rel="noopener">Collection Tracker</a>
+        <span class="app-desc">Tracks which weapons, armor and Palico gear you own, and what it costs to finish them.</span>
+      </li>
+      <li>
+        <a href="https://armoredraven17.github.io/mhgu-equipment-box/" target="_blank" rel="noopener">Equipment Box</a>
+        <span class="app-desc">Mirrors the in-game box — 2000 hunter slots and 1000 Palico — so you can plan where things sit.</span>
+      </li>
+      <li>
+        <a href="https://armoredraven17.github.io/MHGU-Bingo/" target="_blank" rel="noopener">Bingo</a>
+        <span class="app-desc">Builds a bingo card of hunting goals, with a shareable seed so a group can race the same board.</span>
+      </li>
+      <li>
+        <a href="https://armoredraven17.github.io/MHGU-Hunting-Log/" target="_blank" rel="noopener">Hunting Log</a>
+        <span class="app-desc">Keeps a running record of your hunts — what you were after, what you wore, who came along.</span>
+      </li>
+      <li>
+        <a href="https://armoredraven17.github.io/MHGU-Zenny-Gauntlet/" target="_blank" rel="noopener">Zenny Gauntlet</a>
+        <span class="app-desc">A scored challenge run — fail a hunt or get carted and you lose that weapon/style combo for the rest of the run.</span>
+      </li>
+      <li>
+        <a href="https://armoredraven17.github.io/mhgu-set-builder/" target="_blank" rel="noopener">Set Builder</a>
+        <span class="app-desc">Assemble a full set by hand and see exactly which skills it activates.</span>
+      </li>
+      <li>
+        <a href="https://armoredraven17.github.io/mhgu-weapon-trees/" target="_blank" rel="noopener">Weapon Trees</a>
+        <span class="app-desc">Browse every weapon upgrade tree, with full stats on any node you click.</span>
+      </li>
+      <li>
+        <a href="https://armoredraven17.github.io/MHGU-Challenge-Run/" target="_blank" rel="noopener">Challenge Run</a>
+        <span class="app-desc">A permadeath challenge run — start from a root weapon, lose it on any quest failure, clear every Key Quest.</span>
+      </li>
+      <li class="current">
+        <span class="app-name">Charm Farm <span class="app-here">you are here</span></span>
+        <span class="app-desc">Beat charms out of a Brachydios, then meld three of a rarity into one fresh roll.</span>
+      </li>
+    </ul>
+    <div class="row end gap">
+      <button id="linksClose" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div id="helpModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Controls</h2>
+
+    <div class="set-title">The hunt</div>
+    <dl class="help-list">
+      <dt>Click the monster</dt><dd>Deal damage. At zero HP it drops charms, ore and zenny</dd>
+      <dt><kbd>Space</kbd></dt><dd>Same as clicking — hold it down</dd>
+      <dt>Smithy</dt><dd>Spend zenny <em>and</em> ore on upgrades. Ore comes from the variant wearing that ore's colours</dd>
+      <dt>Ore chip</dt><dd>Click to sell that ore at the game's real price</dd>
+    </dl>
+
+    <div class="set-title">The box and the pot</div>
+    <dl class="help-list">
+      <dt>Click a charm</dt><dd>Inspect it</dd>
+      <dt>Drag to the pot</dt><dd>Load a charm into a melding slot</dd>
+      <dt>Click a pot slot</dt><dd>Send that charm back to the box</dd>
+      <dt>Meld</dt><dd>Three charms of the <b>same rarity</b> become one new charm of that rarity</dd>
+      <dt>Auto-fill</dt><dd>Loads rows from whatever you have three-of, best rarity first</dd>
+      <dt><kbd>Ctrl</kbd> + <kbd>S</kbd></dt><dd>Save to a file</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Close a dialog</dd>
+    </dl>
+
+    <div class="set-title">The roster</div>
+    <p class="muted">Every Brachydios below the Raging one is the same sprite wearing an ore's
+      colours. Which ones can show up depends on your rank, matching the ranks that ore can
+      actually be mined at in the game.</p>
+    <div class="roster" id="roster"></div>
+
+    <div class="row end gap">
+      <button id="helpClose" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- About / Attributions -->
+<div id="aboutModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>About / Attributions</h2>
+    <p>An unofficial, non-commercial fan toy: grind a Brachydios for talismans, then feed
+      three of a rarity into the Melding Pot for one fresh roll of that rarity. The charms it
+      rolls are real — every skill and point value comes from the game's own charm tables, so
+      nothing it produces is something MHGU couldn't give you.</p>
+    <p><strong>Development:</strong> Built by the author with substantial help from
+      <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>,
+      Anthropic's AI coding tool. Most of the code, the data-extraction scripts and this page
+      were written with AI assistance, reviewed and directed by the author.</p>
+    <p><strong>Charm tables, ore names, prices and mining ranks:</strong> derived from
+      <a href="https://mhgu.kiranico.com" target="_blank" rel="noopener">Kiranico</a> and the
+      community MHGU database.</p>
+    <p><strong>English item, skill and equipment names:</strong>
+      <a href="https://github.com/JoeLago/MHGUDB-iOS" target="_blank" rel="noopener">MHGUDB-iOS</a> (MIT) &amp;
+      <a href="https://github.com/gatheringhallstudios/MHGenDatabase" target="_blank" rel="noopener">gatheringhallstudios</a>
+      community database. The game files store names in Japanese only, so the English naming
+      throughout this tool comes from their work.</p>
+    <p><strong>Talisman icons:</strong>
+      <a href="https://monsterhunterwiki.org" target="_blank" rel="noopener">monsterhunterwiki.org</a> —
+      licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>;
+      adaptations shared under the same licence.</p>
+    <p><strong>Monster and ore icons:</strong>
+      <a href="https://monsterhunter.fandom.com/" target="_blank" rel="noopener">Monster Hunter Wiki (Fandom)</a> —
+      licensed under <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>;
+      adaptations shared under the same licence. The ore-coloured Brachydios variants are
+      CSS recolours of the base icon and are shared under that same licence.</p>
+    <p><strong>Menu textures and font:</strong> carried over from the MHGU Collection Tracker.</p>
+    <p class="muted">Monster Hunter content is owned by Capcom. This tool is not affiliated
+      with or endorsed by Capcom.</p>
+    <div class="row end gap">
+      <button id="aboutClose" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Settings</h2>
+
+    <div class="set-section">
+      <div class="set-title">Storage</div>
+      <div class="set-row">
+        <div class="set-label">Save in this browser
+          <span class="set-hint">Keeps your farm here so it loads automatically. Use Save to a file for backups or another device.</span></div>
+        <button type="button" class="toggle" id="localSaveToggle" role="switch" aria-checked="true" aria-label="Save in this browser"></button>
+      </div>
+      <button id="clearLocalBtn" class="btn tiny">Clear browser save</button>
+    </div>
+
+    <div class="set-section">
+      <div class="set-title">Interaction</div>
+      <div class="set-row">
+        <div class="set-label">Confirm before emptying or bulk-selling
+          <span class="set-hint">Those two take the whole box at once.</span></div>
+        <button type="button" class="toggle" id="confirmBulkToggle" role="switch" aria-checked="true" aria-label="Confirm before emptying or bulk-selling"></button>
+      </div>
+      <div class="set-row">
+        <div class="set-label">Floating damage numbers
+          <span class="set-hint">Turn off if the numbers get distracting at high click rates.</span></div>
+        <button type="button" class="toggle" id="dmgNumbersToggle" role="switch" aria-checked="true" aria-label="Floating damage numbers"></button>
+      </div>
+    </div>
+
+    <div class="set-section">
+      <div class="set-title">Run</div>
+      <div class="set-row">
+        <div class="set-label">Start over
+          <span class="set-hint">Clears zenny, hunts, upgrades, ore, the box and the pot.</span></div>
+      </div>
+      <button id="resetRunBtn" class="btn tiny danger">Reset run</button>
+    </div>
+
+    <div class="set-section">
+      <div class="set-title">Theme</div>
+      <div id="swatches" class="swatches"></div>
+    </div>
+
+    <div class="row end gap">
+      <button id="settingsClose" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Restore-session banner -->
+<div id="restoreBanner" class="restore-banner hidden">
+  <span>An unsaved farm from your last session was found.</span>
+  <button id="restoreYes" class="btn tiny">Restore</button>
+  <button id="restoreNo" class="btn tiny">Dismiss</button>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="data/charm.js?v=1"></script>
+<script src="data/skills.js?v=1"></script>
+<script src="data/ores.js?v=1"></script>
+<script src="roll.js?v=1"></script>
+<script src="farm.js?v=3"></script>
+<script src="box.js?v=2"></script>
+<script src="ui.js?v=2"></script>
+<script src="app.js?v=2"></script>
+</body>
+</html>
