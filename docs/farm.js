@@ -188,7 +188,12 @@ window.FARM = (function () {
     // theme picker, so it has to persist with the run. The base Brachydios starts
     // unlocked: he's the one already standing in front of you, and a picker showing
     // fourteen locked tiles on a fresh save reads as broken rather than as progression.
-    return { zenny: 0, kills: 0, hp: 0, variant: "base", upgrades: {}, ores: {}, seen: { base: true } };
+    return {
+      zenny: 0, kills: 0, hp: 0, variant: "base", upgrades: {}, ores: {}, seen: { base: true },
+      // Kill count when the last god charm turned up, so the next one can say how long
+      // the drought was. 0 means there hasn't been one yet.
+      lastGodAt: 0,
+    };
   }
   const hasSeen = id => !!(state && state.seen && state.seen[id]);
 
@@ -428,6 +433,7 @@ window.FARM = (function () {
     state.ores = Object.assign({}, (saved && saved.ores) || {});
     // Base always unlocked, including in saves written before `seen` existed.
     state.seen = Object.assign({ base: true }, (saved && saved.seen) || {});
+    state.lastGodAt = (saved && saved.lastGodAt) || 0;
     if (!variantById[state.variant]) state.variant = "base";
     if (!state.hp || state.hp <= 0 || state.hp > hpMax()) spawn();
     // Only replace the hooks when we're actually given some. Loading a save calls
