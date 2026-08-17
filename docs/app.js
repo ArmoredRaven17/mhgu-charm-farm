@@ -527,8 +527,18 @@
   });
 
   $("clearLocalBtn").addEventListener("click", () => {
-    BOX.clearLocalSave();
-    toast("Browser save cleared.");
+    // Worth a confirm for the same reason Reset run has one: it throws away a farm and
+    // can't be taken back. The wording spells out that it deletes the *stored* copy
+    // rather than the run in front of you, since with saving still on the very next
+    // hunt writes a fresh one — the way to actually lose the farm is to clear it and
+    // then close the tab.
+    askConfirm("Clear the browser save?",
+      "The copy stored in this browser is deleted and can't be recovered. The run you're " +
+      "playing carries on, and with saving still on it will store a fresh copy on your next hunt.",
+      () => {
+        BOX.clearLocalSave();
+        toast("Browser save cleared.");
+      });
   });
   $("resetRunBtn").addEventListener("click", () => {
     askConfirm("Reset the run?", "Zenny, hunts, upgrades, ore, the box and the pot all go back to zero. This can't be undone.", () => {

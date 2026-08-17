@@ -181,10 +181,12 @@ window.UI = (function () {
       const haveO = (F.state.ores[oc.ore] || 0) >= oc.qty;
       // Explicit label: the button's name is otherwise assembled from nested divs,
       // which screen readers announce as a wall of numbers or not at all.
-      const spoken = `${label}, level ${level}. ${up.desc}. Costs ${z.toLocaleString()} zenny and ${oc.qty} ${ore.name}`;
+      const spoken = `${label}${level ? `, level ${level}` : ""}. ${up.desc}. ` +
+        `Costs ${z.toLocaleString()} zenny and ${oc.qty} ${ore.name}`;
       // A skill-named entry already reads "Sharpness +5"; a second "Lv 5" beside it is
-      // the same fact twice.
-      const badge = up.levelled ? "" : `<span class="shop-lv">Lv ${level}</span>`;
+      // the same fact twice. And nothing you don't own yet has a level — a hire sitting
+      // at "Lv 0" reads as a rank rather than as someone you haven't taken on.
+      const badge = up.levelled || level === 0 ? "" : `<span class="shop-lv">Lv ${level}</span>`;
       return `<button type="button" class="shop-item" data-buy="${up.id}" aria-label="${esc(spoken)}">
         <div class="shop-row"><span class="shop-name">${esc(label)}</span>${badge}</div>
         <div class="shop-desc">${esc(up.desc)}</div>
