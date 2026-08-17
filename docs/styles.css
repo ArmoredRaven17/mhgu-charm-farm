@@ -198,6 +198,11 @@ kbd{
 .shop-item:hover{background:#ffffff12;border-color:var(--accent-hover)}
 .shop-item.maxed{opacity:.5;cursor:default}
 .shop-item.maxed:hover{background:#00000030;border-color:var(--line)}
+/* An employed hire stays live — the row is the switch that stands them down. */
+.shop-item.hire .shop-lv{color:var(--positive);font-weight:600}
+.shop-item.hire.paused{opacity:.5}
+.shop-item.hire.paused .shop-lv{color:#e8b888}
+.shop-item.hire.paused .shop-name{text-decoration:line-through;text-decoration-thickness:1px}
 .shop-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .shop-name{font-size:12.5px;font-weight:600}
 .shop-lv{font-size:11px;opacity:.6;font-variant-numeric:tabular-nums;flex-shrink:0}

@@ -22,6 +22,7 @@ window.UI = (function () {
   let confirmBulk = true;
   let junkMax = 2;          // highest rarity Sell Junk will take
   let autoSort = false;     // re-apply the chosen sort after every hunt
+  let hiresPaused = {};     // hire id -> true when stood down
   let toastTimer = null;
   let cells = [];           // the 100 cell divs, built once and repainted in place
 
@@ -112,6 +113,18 @@ window.UI = (function () {
       const maxed = level >= up.max;
       const label = F.upgradeName(up);      // "Hire a Palico" becomes "Upgrade Palico Gear"
       if (maxed) {
+        // A hire you already employ stays clickable — the row becomes the switch that
+        // stands them down and puts them back to work, so pausing lives where the hire
+        // does rather than buried in Settings.
+        if (up.hire) {
+          const off = !!hiresPaused[up.id];
+          return `<button type="button" class="shop-item hire${off ? " paused" : ""}"
+            data-toggle="${up.id}" aria-pressed="${off ? "false" : "true"}"
+            aria-label="${esc(label)} is ${off ? "paused" : "working"}. ${esc(up.desc)}. Click to ${off ? "resume" : "pause"}.">
+            <div class="shop-row"><span class="shop-name">${esc(label)}</span>
+              <span class="shop-lv">${off ? "Paused" : "Working"}</span></div>
+            <div class="shop-desc">${esc(up.desc)}</div></button>`;
+        }
         return `<div class="shop-item maxed">
           <div class="shop-row"><span class="shop-name">${esc(label)}</span>
             <span class="shop-lv">MAX</span></div>
@@ -500,8 +513,18 @@ window.UI = (function () {
       if (gain) toast(`Sold for ${gain.toLocaleString()}z.`);
     });
 
-    // Shop.
+    // Shop — buying, and standing a hire down or putting them back to work.
     $("shop").addEventListener("click", ev => {
+      const toggle = ev.target.closest("[data-toggle]");
+      if (toggle) {
+        const id = toggle.dataset.toggle;
+        hiresPaused[id] = !hiresPaused[id];
+        hooks.settingChanged("hiresPaused", hiresPaused);
+        const up = window.FARM.UPGRADES.find(u => u.id === id);
+        toast(`${window.FARM.upgradeName(up)} ${hiresPaused[id] ? "stood down" : "back to work"}.`);
+        renderShop();
+        return;
+      }
       const btn = ev.target.closest("[data-buy]");
       if (!btn) return;
       const why = window.FARM.buy(btn.dataset.buy);
@@ -626,6 +649,7 @@ window.UI = (function () {
 
   const setShowDamage = v => { showDamage = !!v; };
   const setConfirmBulk = v => { confirmBulk = !!v; };
+  const setHiresPaused = o => { hiresPaused = Object.assign({}, o || {}); };
   const setAutoSort = v => {
     autoSort = !!v;
     const el = $("autoSortToggle");
@@ -641,7 +665,7 @@ window.UI = (function () {
   return {
     buildGrid, renderAll, renderArena, renderGrid, renderPot, renderDetail, renderOres,
     renderShop, renderRoster, initEvents, toast, floatDamage, hitFlash, flashFresh,
-    setShowDamage, setConfirmBulk, setJunkMax, setAutoSort, maybeAutoSort,
+    setShowDamage, setConfirmBulk, setJunkMax, setAutoSort, setHiresPaused, maybeAutoSort,
     clearSelection, hideTip, esc,
     get page() { return page; },
     set page(p) { page = p; },

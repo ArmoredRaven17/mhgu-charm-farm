@@ -225,10 +225,14 @@
     dmgNumbers: settings.dmgNumbers !== false,
     junkMax: settings.junkMax || 2,
     autoSort: !!settings.autoSort,
-    // Kokoto Gal spends everything the moment she can, which is the point — but you
-    // may want to save for a hire, so hiring her doesn't take the wallet away.
-    kokotoActive: settings.kokotoActive !== false,
+    // Which hires are stood down. Kokoto Gal used to be the only one you could switch
+    // off, from Settings; that single flag is carried over here.
+    hiresPaused: Object.assign(
+      settings.kokotoActive === false ? { kokoto: true } : {},
+      settings.hiresPaused || {}),
   };
+  // A hire only acts if you employ them and haven't stood them down.
+  const hireOn = id => FARM.lvl(id) > 0 && !state.hiresPaused[id];
   function persistSettings() { BOX.writeSettings(state); }
   UI.setConfirmBulk(state.confirmBulk);
   UI.setShowDamage(state.dmgNumbers);
@@ -319,14 +323,14 @@
 
       // Maximeld XIV reloads the pot once the hunt's drops are in, so the row that
       // just resolved is refilled from whatever the kill produced.
-      if (FARM.lvl("maximeld") > 0) BOX.autoFill();
+      if (hireOn("maximeld")) BOX.autoFill();
 
       // Neko clears out junk. She reads the same "Junk ≤" dropdown the Sell Junk
       // button uses, so hiring her doesn't add a control — it just stops you pressing
       // the button. Low-rarity charms are the ones that pile up worst: Auto-fill can
       // only load a rarity you hold three of, so a trickle of rarity 1s and 2s never
       // reaches the pot at all and would otherwise sit there forever.
-      if (FARM.lvl("neko") > 0) {
+      if (hireOn("neko")) {
         const sale = BOX.sellWhere(c => c.r <= state.junkMax);  // god charms already exempt
         if (sale.count) nekoEarned += sale.zenny;
       }
@@ -334,7 +338,7 @@
       // The Argosy Captain clears the shelves: anything no remaining upgrade level
       // will ever ask for goes entirely, and still-wanted ore is trimmed to a reserve
       // so a full stack of Iron Ore isn't sitting there forever.
-      if (FARM.lvl("argosy") > 0) {
+      if (hireOn("argosy")) {
         const need = FARM.oresStillNeeded();
         let earned = 0;
         for (const o of FARM.ORES) {
@@ -350,7 +354,7 @@
       // to the next — see FARM.nextPurchase, which the simulation uses too. The bound
       // is belt-and-braces: every purchase raises its own next cost, so the loop
       // terminates on its own, but a runaway here would freeze the tab.
-      if (FARM.lvl("kokoto") > 0 && state.kokotoActive) {
+      if (hireOn("kokoto")) {
         for (let i = 0; i < 40; i++) {
           const pick = FARM.nextPurchase();
           if (!pick) break;
@@ -424,6 +428,7 @@
   // These live in the toolbar, so set them after initEvents has bound them.
   UI.setJunkMax(state.junkMax);
   UI.setAutoSort(state.autoSort);
+  UI.setHiresPaused(state.hiresPaused);
 
   // Restore. With browser-save on it loads silently; with it off, the banner offers
   // the choice rather than throwing away last session's work without asking.
@@ -491,13 +496,6 @@
   });
   bindToggle("dmgNumbersToggle", () => state.dmgNumbers, v => {
     state.dmgNumbers = v; UI.setShowDamage(v); persistSettings();
-  });
-  bindToggle("kokotoToggle", () => state.kokotoActive, v => {
-    state.kokotoActive = v; persistSettings();
-  });
-  // She isn't hired yet, so the switch would be a control for nothing.
-  $("settingsBtn").addEventListener("click", () => {
-    $("kokotoRow").classList.toggle("hidden", FARM.lvl("kokoto") === 0);
   });
 
   $("clearLocalBtn").addEventListener("click", () => {

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
 <div id="app">
@@ -205,7 +205,9 @@
         <b>Argosy Captain</b> sells off ore that no remaining upgrade will ever ask for, and
         trims the surplus of the ones still wanted. <b>Kokoto Gal</b> spends your zenny and
         ore on upgrades. All four are one-off hires costing a stack of G-rank ore, and
-        between them the farm runs itself</dd>
+        between them the farm runs itself. <b>Click a hire in the smithy to stand them
+        down</b>, and click again to put them back to work — useful when you're saving
+        for something Kokoto would spend, or want the pot left alone</dd>
       <dt>Away from the tab</dt><dd>Palicoes and hired hunters keep working while the page
         is closed, up to 8 hours' worth. You're told what they caught when you come back</dd>
     </dl>
@@ -302,11 +304,6 @@
           <span class="set-hint">Those two take the whole box at once.</span></div>
         <button type="button" class="toggle" id="confirmBulkToggle" role="switch" aria-checked="true" aria-label="Confirm before emptying or bulk-selling"></button>
       </div>
-      <div class="set-row" id="kokotoRow">
-        <div class="set-label">Let Kokoto Gal spend
-          <span class="set-hint">She buys the cheapest upgrade she can after every hunt. Turn her off while you're saving for something.</span></div>
-        <button type="button" class="toggle" id="kokotoToggle" role="switch" aria-checked="true" aria-label="Let Kokoto Gal spend"></button>
-      </div>
       <div class="set-row">
         <div class="set-label">Floating damage numbers
           <span class="set-hint">Turn off if the numbers get distracting at high click rates.</span></div>
@@ -351,9 +348,9 @@
 <script src="data/skills.js?v=1"></script>
 <script src="data/ores.js?v=1"></script>
 <script src="roll.js?v=6"></script>
-<script src="farm.js?v=21"></script>
+<script src="farm.js?v=22"></script>
 <script src="box.js?v=10"></script>
-<script src="ui.js?v=14"></script>
-<script src="app.js?v=16"></script>
+<script src="ui.js?v=15"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
