@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=14">
+<link rel="stylesheet" href="styles.css?v=15">
 </head>
 <body>
 <div id="app">
@@ -100,11 +100,13 @@
 
     <!-- Inspected talisman, then the melding pot -->
     <aside class="farm-col pot-col">
-      <!-- The charm you're inspecting sits above the pot: ten rows of slots would
-           otherwise push it off the bottom, and it's what you read while deciding
-           what to feed in. -->
-      <div class="panel-title">Talisman</div>
-      <div class="detail" id="detail"></div>
+      <!-- The charm you're inspecting is docked to the top of the column and stays
+           put while the pot scrolls under it — it's the thing you're reading while
+           deciding what to feed in, so it shouldn't leave the screen to do it. -->
+      <div class="detail-dock">
+        <div class="panel-title">Talisman</div>
+        <div class="detail" id="detail"></div>
+      </div>
 
       <div class="panel-title">Melding Pot</div>
       <!-- Actions and status sit above the ten rows: the rows are tall enough to push
