@@ -370,8 +370,10 @@ kbd{
 .pot-actions{display:flex;gap:6px;padding:0 12px;flex-wrap:wrap}
 
 /* ── Detail ──────────────────────────────────────────────────────────── */
+/* Sits above the pot now, so its rule closes it off from the rows below rather than
+   separating it from what came before. */
 .detail{
-  border-top:1px solid var(--line);padding:10px 14px 16px;margin-top:8px
+  border-bottom:1px solid var(--line);padding:2px 14px 12px;margin-bottom:4px
 }
 .detail-empty{opacity:.45;font-size:11.5px;text-align:center;padding:12px 0}
 .detail-name{font-size:15px;font-weight:700;text-align:center;line-height:1.25;margin:2px 0 6px}
