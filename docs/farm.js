@@ -115,8 +115,13 @@ window.FARM = (function () {
     // more and cap lower.
     { id: "hunters", name: "Hunters for Hire", desc: "+1 attack per second, using your click damage",
       base: 5000, mult: 1.29, max: 40, ore: 6 },
+    // The steep 3.2x is deliberate — each level is a flat multiplier on every charm
+    // you'll ever get — but the 40,000 base it was raised to in the cost rebalance
+    // was never checked on its own, and it locked a light player out of level one
+    // entirely across a whole session. The steepness is what makes it a long goal;
+    // the base only decides whether you can start.
     { id: "drop", name: "Wider haul", desc: "+1 charm per kill",
-      base: 40000, mult: 3.2, max: 6, ore: 8 },
+      base: 12000, mult: 3.2, max: 6, ore: 8 },
     { id: "zenny", name: "Better appraisal", desc: "+15% zenny per kill",
       base: 5000, mult: 1.38, max: 12, ore: 5 },
 
@@ -141,12 +146,23 @@ window.FARM = (function () {
 
   // Which ore a given upgrade level demands, and how many. Levels walk up the ladder
   // so the shop keeps pointing you at whatever you haven't farmed yet.
-  // The ore demanded walks up the ladder every three levels, and the quantity climbs
-  // every second level. The quantity curve used to be level/4, which meant the first
-  // four levels of anything cost a single ore each — you could buy a row of Palicoes
-  // off one hunt's drops. This is the knob to turn if ore feels too tight or too free.
+  // How many levels an upgrade spends on each rung of the ore ladder. Derived from
+  // how many levels it HAS, so every upgrade traverses a comparable span of the
+  // ladder over its life rather than a fixed three levels per rung.
+  //
+  // The fixed step made Fucium Ore — the middle rung — the ore half the shop wanted
+  // at once through the whole mid-game, and the last ore two upgrades ever asked for:
+  // Wider haul has six levels, so at three-per-rung it only ever touched Carbalite
+  // and Fucium and stopped. Short upgrades now climb quickly and reach the rare ores;
+  // long ones linger, which is right, since you buy far more levels of them.
+  const oreStep = up => Math.min(8, Math.max(1, Math.round(up.max / 8)));
+
+  // The quantity climbs every second level. It used to be level/4, which meant the
+  // first four levels of anything cost a single ore each — you could buy a row of
+  // Palicoes off one hunt's drops.
   function oreCost(up, level) {
-    const idx = Math.min(ORE_LADDER.length - 1, Math.floor(level / 3) + Math.floor(up.ore / 2));
+    const idx = Math.min(ORE_LADDER.length - 1,
+      Math.floor(level / oreStep(up)) + Math.floor(up.ore / 2));
     // oreQty lets a one-off hire ask for a stack rather than the usual single ore.
     const base = up.oreQty || 1;
     return { ore: ORE_LADDER[idx], qty: base + Math.floor(level / 2) };
