@@ -48,14 +48,17 @@ check(slotSeen.enduring.has(3), "enduring never rolled a 3-slot charm in 50k");
 console.log("slot counts seen:", Object.fromEntries(
   Object.entries(slotSeen).map(([k, v]) => [k, [...v].sort().join("/")])));
 
-// ── Melding: three of a rarity in, one of that rarity out ────────────────────
+// ── Melding: three of a rarity in, one of the NEXT rarity out ────────────────
 for (let r = 1; r <= 10; r++) {
   const a = ROLL.rollCharm(r), b = ROLL.rollCharm(r), c = ROLL.rollCharm(r);
   check(ROLL.legalMeld(a, b, c), `three rarity-${r} charms should be a legal meld`);
+  const expect = Math.min(10, r + 1);
   const out = ROLL.meld(a, b, c);
-  check(out && out.r === r, `meld of rarity ${r} should return rarity ${r}`);
+  check(out && out.r === expect, `meld of rarity ${r} should return rarity ${expect}, got ${out && out.r}`);
   check(out && ROLL.verify(out).length === 0, `meld output at rarity ${r} must be legal`);
 }
+check(ROLL.meldOutputRarity(9) === 10, "rarity 9 melds up to 10");
+check(ROLL.meldOutputRarity(10) === 10, "rarity 10 is the ceiling");
 check(!ROLL.legalMeld(ROLL.rollCharm(3), ROLL.rollCharm(3), ROLL.rollCharm(5)),
   "mismatched rarities must not be a legal meld");
 check(!ROLL.legalMeld(ROLL.rollCharm(3), null, ROLL.rollCharm(3)),
@@ -95,6 +98,13 @@ check(ores.filter(o => o.rank === 2).every(o => o.rarity >= 8), "every G ore sho
     "a skill one point below its ceiling is not a god charm");
   // Mystery can't reach three slots, so it can never produce one.
   check(!ROLL.isGod({ r: 1, s: 3, k: god.k }), "a mystery-tier charm can't be a god charm");
+  // And a god charm is never a legal meld input, at any position in the row.
+  const plain = ROLL.rollCharm(10);
+  const plain2 = ROLL.rollCharm(10);
+  check(!ROLL.legalMeld(god, plain, plain2), "a god charm in slot 1 must block the meld");
+  check(!ROLL.legalMeld(plain, god, plain2), "a god charm in slot 2 must block the meld");
+  check(!ROLL.legalMeld(plain, plain2, god), "a god charm in slot 3 must block the meld");
+  check(ROLL.meld(god, plain, plain2) === null, "melding a god charm must return nothing");
 }
 
 // No charm should ever carry a zero-point skill — that's the same charm with one
@@ -128,6 +138,22 @@ for (const v of FARM.VARIANTS) {
 }
 for (let r = 0; r <= 2; r++)
   check(FARM.VARIANTS.some(v => v.rank <= r), `rank ${r} has an empty spawn pool`);
+// Spawn weight must fall monotonically down the roster, so a cheap early ore is never
+// rarer than a better one from a higher rank. Getting more Fucium than Dragonite was
+// the bug this guards against.
+for (let i = 1; i < FARM.VARIANTS.length; i++) {
+  const prev = FARM.VARIANTS[i - 1], cur = FARM.VARIANTS[i];
+  check(cur.w <= prev.w, `${cur.name} (w ${cur.w}) is more common than ${prev.name} (w ${prev.w})`);
+  check(cur.rank >= prev.rank || cur.w <= prev.w, `${cur.name} is out of rank order`);
+}
+// And the actual sampled distribution has to agree at every rank.
+for (const rank of [0, 1, 2]) {
+  const pool = FARM.VARIANTS.filter(v => v.rank <= rank);
+  const total = pool.reduce((n, v) => n + v.w, 0);
+  for (let i = 1; i < pool.length; i++)
+    check(pool[i].w / total <= pool[i - 1].w / total,
+      `at rank ${rank}, ${pool[i].name} spawns more often than ${pool[i - 1].name}`);
+}
 check(FARM.VARIANTS.filter(v => v.icon === "raging").length === 1, "expected exactly one Raging variant");
 console.log(`roster: ${FARM.VARIANTS.length} variants, pools ` +
   [0, 1, 2].map(r => FARM.VARIANTS.filter(v => v.rank <= r).length).join("/"));
@@ -146,6 +172,17 @@ for (const up of FARM.UPGRADES) {
   }
 }
 check(FARM.ORE_LADDER.every(id => oreIds.has(id)), "ORE_LADDER names an ore that doesn't exist");
+
+// Every ore must be asked for by something at some point, or it's a drop with no
+// purpose. Iron Ore used to be exactly that — the cheapest upgrade started a rung
+// above it while Iron Brachydios was the most common variant in the game.
+{
+  const demanded = new Set();
+  for (const up of FARM.UPGRADES) {
+    for (let lv = 0; lv < Math.min(up.max, 200); lv++) demanded.add(FARM.oreCost(up, lv).ore);
+  }
+  for (const o of ores) check(demanded.has(o.id), `nothing ever asks for ${o.name}`);
+}
 
 console.log(fail === 0 ? "\nall checks passed" : `\n${fail} check(s) failed`);
 process.exit(fail === 0 ? 0 : 1);

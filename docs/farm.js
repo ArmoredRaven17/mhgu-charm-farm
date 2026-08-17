@@ -25,51 +25,55 @@ window.FARM = (function () {
   // exists, so adding, recolouring or renaming one is a single edit here.
   const VARIANTS = [
     { id: "base", name: "Brachydios", icon: "brachy", filter: "none",
-      ore: null, rank: 0, w: 100, hp: 1, shift: 0 },
+      ore: null, rank: 0, w: 200, hp: 1, shift: 0 },
 
+    // Weights fall monotonically down the whole list, so a common ore is never rarer
+    // than a better one. They used to be ordered within each rank block only, which
+    // put Dragonite (18) below Fucium (22) — you ended up with more of the high-rank
+    // ore than the low-rank one it was supposed to be feeding into.
     { id: "iron", name: "Iron Brachydios", icon: "brachy",
       filter: "saturate(.2) brightness(1.05)",
-      ore: "iron", rank: 0, w: 45, hp: 1.3, shift: 0 },
+      ore: "iron", rank: 0, w: 120, hp: 1.3, shift: 0 },
     { id: "earth", name: "Earth Crystal Brachydios", icon: "brachy",
       filter: "grayscale(.85) brightness(1.3)",
-      ore: "earth", rank: 0, w: 40, hp: 1.45, shift: 0 },
+      ore: "earth", rank: 0, w: 104, hp: 1.45, shift: 0 },
     { id: "machalite", name: "Machalite Brachydios", icon: "brachy",
       filter: "hue-rotate(-10deg) saturate(1.5) brightness(1.05)",
-      ore: "machalite", rank: 0, w: 32, hp: 1.7, shift: 0 },
+      ore: "machalite", rank: 0, w: 88, hp: 1.7, shift: 0 },
     { id: "dragonite", name: "Dragonite Brachydios", icon: "brachy",
       filter: "hue-rotate(-100deg) saturate(1.4)",
-      ore: "dragonite", rank: 0, w: 18, hp: 2.2, shift: 1 },
+      ore: "dragonite", rank: 0, w: 68, hp: 2.2, shift: 1 },
 
     { id: "carbalite", name: "Carbalite Brachydios", icon: "brachy",
       filter: "hue-rotate(60deg) saturate(1.5)",
-      ore: "carbalite", rank: 1, w: 30, hp: 2.6, shift: 1 },
+      ore: "carbalite", rank: 1, w: 46, hp: 2.6, shift: 1 },
     { id: "fucium", name: "Fucium Brachydios", icon: "brachy",
       filter: "hue-rotate(112deg) saturate(1.45) brightness(1.5)",
-      ore: "fucium", rank: 1, w: 22, hp: 3, shift: 1 },
+      ore: "fucium", rank: 1, w: 34, hp: 3, shift: 1 },
     { id: "lightcrystal", name: "Lightcrystal Brachydios", icon: "brachy",
       filter: "saturate(.04) brightness(1.8)",
-      ore: "lightcrystal", rank: 1, w: 16, hp: 3.4, shift: 1 },
+      ore: "lightcrystal", rank: 1, w: 25, hp: 3.4, shift: 1 },
     { id: "firecell", name: "Firecell Brachydios", icon: "brachy",
       filter: "hue-rotate(170deg) saturate(1.8) brightness(1.05)",
-      ore: "firecell", rank: 1, w: 10, hp: 4.2, shift: 2 },
+      ore: "firecell", rank: 1, w: 18, hp: 4.2, shift: 2 },
 
     { id: "eltalite", name: "Eltalite Brachydios", icon: "brachy",
       filter: "hue-rotate(140deg) saturate(1.9)",
-      ore: "eltalite", rank: 2, w: 26, hp: 5, shift: 1 },
+      ore: "eltalite", rank: 2, w: 13, hp: 5, shift: 1 },
     { id: "allfire", name: "Allfire Brachydios", icon: "brachy",
       filter: "hue-rotate(140deg) saturate(2.4) brightness(.5)",
-      ore: "allfire", rank: 2, w: 14, hp: 6.5, shift: 2 },
+      ore: "allfire", rank: 2, w: 9, hp: 6.5, shift: 2 },
     { id: "purecrystal", name: "Purecrystal Brachydios", icon: "brachy",
       filter: "hue-rotate(-30deg) saturate(1.3) brightness(1.25)",
-      ore: "purecrystal", rank: 2, w: 8, hp: 7.5, shift: 2 },
+      ore: "purecrystal", rank: 2, w: 6, hp: 7.5, shift: 2 },
     { id: "ultimas", name: "Ultimas Brachydios", icon: "brachy",
       filter: "hue-rotate(195deg) saturate(1.9) brightness(1.1)",
-      ore: "ultimas", rank: 2, w: 6, hp: 8.5, shift: 2 },
+      ore: "ultimas", rank: 2, w: 4, hp: 8.5, shift: 2 },
 
     // The only variant with its own artwork, and the rarest thing in the pool.
     // "*G" means it pays out a spread of G-rank ores instead of a single one.
     { id: "raging", name: "Raging Brachydios", icon: "raging", filter: "none",
-      ore: "*G", rank: 2, w: 3, hp: 12, shift: 2 },
+      ore: "*G", rank: 2, w: 2, hp: 12, shift: 2 },
   ];
   const variantById = Object.fromEntries(VARIANTS.map(v => [v.id, v]));
 
@@ -94,8 +98,11 @@ window.FARM = (function () {
     "fucium", "lightcrystal", "firecell", "eltalite", "allfire", "purecrystal", "ultimas"];
 
   const UPGRADES = [
+    // ore:0 puts this at the bottom of the ladder — Iron Ore. Nothing else starts
+    // that low, and without it the most common drop in the game would never be asked
+    // for by anything.
     { id: "dmg", name: "Sharper strikes", desc: "+1 damage per click",
-      base: 25, mult: 1.15, max: 999, ore: 2 },
+      base: 25, mult: 1.15, max: 999, ore: 0 },
     { id: "crit", name: "Keener eye", desc: "+2% critical chance",
       base: 150, mult: 1.22, max: 20, ore: 3 },
     { id: "critdmg", name: "Heavier crits", desc: "+0.25x critical damage",
@@ -112,6 +119,19 @@ window.FARM = (function () {
       base: 5000, mult: 3.2, max: 6, ore: 8 },
     { id: "zenny", name: "Better appraisal", desc: "+15% zenny per kill",
       base: 1200, mult: 1.35, max: 12, ore: 5 },
+
+    // The two hires. One-offs, priced to be the thing you save for rather than
+    // something you drift into: each wants a stack of a G-rank ore, and Ultimas
+    // Crystal is the rarest drop in the game.
+    { id: "maximeld", name: "Maximeld XIV", desc: "Loads the Melding Pot for you after every hunt",
+      base: 400000, mult: 1, max: 1, ore: 16, oreQty: 15 },
+    { id: "argosy", name: "Argosy Captain", desc: "Sells ore no upgrade still needs, plus any surplus",
+      base: 800000, mult: 1, max: 1, ore: 20, oreQty: 12 },
+    // 10 Ultimas rather than 20: the ore ladder caps at Ultimas Crystal, so the late
+    // levels of every other upgrade are competing for the same drop. At 20 the
+    // simulation never once managed to bank enough, in any profile.
+    { id: "kokoto", name: "Kokoto Gal", desc: "Spends your zenny and ore on upgrades for you",
+      base: 1500000, mult: 1, max: 1, ore: 22, oreQty: 10 },
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
 
@@ -123,15 +143,27 @@ window.FARM = (function () {
   // off one hunt's drops. This is the knob to turn if ore feels too tight or too free.
   function oreCost(up, level) {
     const idx = Math.min(ORE_LADDER.length - 1, Math.floor(level / 3) + Math.floor(up.ore / 2));
-    return { ore: ORE_LADDER[idx], qty: 1 + Math.floor(level / 2) };
+    // oreQty lets a one-off hire ask for a stack rather than the usual single ore.
+    const base = up.oreQty || 1;
+    return { ore: ORE_LADDER[idx], qty: base + Math.floor(level / 3) };
   }
   function zennyCost(up, level) {
     return Math.round(up.base * Math.pow(up.mult, level));
   }
 
   // ── State ────────────────────────────────────────────────────────────────────
+  // HP curve. This was exponential (20 × 1.055^kills), which doubles the monster
+  // every ~13 hunts — but damage only grows linearly with upgrade level while each
+  // level costs 1.15× the last, so damage grows roughly with the LOG of your wealth.
+  // Exponential HP against logarithmic damage is a wall: simulation had a casual
+  // player stalled by hunt 120 with 165,000z they couldn't spend.
+  //
+  // A gentle power curve keeps it always getting harder without ever outrunning you:
+  //   100 hunts ≈ 230 HP · 500 ≈ 1,500 · 1,000 ≈ 3,400 · 5,000 ≈ 25,000
+  // then multiplied by the variant, so a Raging Brachydios is still a real event.
   const HP_BASE = 20;
-  const HP_GROWTH = 1.055;   // per kill, before the variant multiplier
+  const HP_RATE = 0.06;      // how fast the curve climbs per kill
+  const HP_POWER = 1.25;     // and how much it steepens
 
   let state = null;
   // Two separate signals on purpose. `onTick` fires for a bare HP change — many times
@@ -160,7 +192,8 @@ window.FARM = (function () {
   const variant = () => variantById[state.variant] || variantById.base;
 
   function hpMax() {
-    return Math.max(1, Math.round(HP_BASE * Math.pow(HP_GROWTH, state.kills) * variant().hp));
+    const curve = Math.pow(1 + state.kills * HP_RATE, HP_POWER);
+    return Math.max(1, Math.round(HP_BASE * curve * variant().hp));
   }
 
   const lvl = id => state.upgrades[id] || 0;
@@ -204,21 +237,31 @@ window.FARM = (function () {
   }
 
   // Which ores a kill pays. "*G" spreads across every G-rank ore.
+  //
+  // Quantities are deliberately generous relative to what one upgrade level costs.
+  // Ore should be the thing you plan around, not a permanent wall: at 1-3 per kill,
+  // simulation had players ore-blocked 100% of the time with six figures of unspent
+  // zenny, which is the least interesting failure mode a shop can have.
   function rollOres(v) {
     if (!v.ore) return {};
     if (v.ore === "*G") {
-      const g = ORES.filter(o => o.rank === 2);
       const got = {};
-      for (const o of g) got[o.id] = 1 + Math.floor(Math.random() * 2);
+      for (const o of ORES.filter(o => o.rank === 2)) got[o.id] = 2 + Math.floor(Math.random() * 3);
       return got;
     }
-    return { [v.ore]: 1 + Math.floor(Math.random() * 3) };
+    return { [v.ore]: 2 + Math.floor(Math.random() * 3) };
   }
 
   function kill() {
     const v = variant();
+    // Pay off what the monster was actually worth, not a flat sum times the kill
+    // count. The old payout was linear in kills, which compounded with a rising kill
+    // rate into tens of millions of unspendable zenny by the two-hour mark. Tying it
+    // to the HP you just chewed through keeps money meaningful and makes a Raging
+    // Brachydios genuinely worth finding.
+    const worth = hpMax();
     state.kills++;
-    const pay = Math.round((40 + state.kills * 6) * v.hp * zennyMult());
+    const pay = Math.round(worth * 0.55 * zennyMult());
     state.zenny += pay;
 
     const ores = rollOres(v);
@@ -277,6 +320,18 @@ window.FARM = (function () {
     state.upgrades[id] = level + 1;
     onChange();
     return null;
+  }
+
+  // Every ore that any not-yet-maxed upgrade will still ask for at some future level.
+  // Because the ladder walks upward and caps at Ultimas, the cheap early ores drop
+  // out of demand permanently once your levels pass their rung — which is exactly
+  // what makes them safe for the Argosy Captain to sell off.
+  function oresStillNeeded() {
+    const need = new Set();
+    for (const up of UPGRADES) {
+      for (let lv = lvl(up.id); lv < up.max; lv++) need.add(oreCost(up, lv).ore);
+    }
+    return need;
   }
 
   function sellOre(id, qty) {
@@ -344,7 +399,7 @@ window.FARM = (function () {
 
   return {
     VARIANTS, RANKS, UPGRADES, ORES, oreById, variantById, ORE_LADDER,
-    init, reset, click, hit, buy, canBuy, sellOre, spawn,
+    init, reset, click, hit, buy, canBuy, sellOre, oresStillNeeded, spawn,
     zennyCost, oreCost,
     get state() { return state; },
     rankIndex, rankName, variant, hpMax,

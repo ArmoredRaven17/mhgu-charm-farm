@@ -46,17 +46,26 @@ window.ROLL = (function () {
 
   // Trees this tier can roll in a given slot, as [treeId, [min,max]] pairs. A row is
   // [s1min, s1max, s2min, s2max]; an all-zero half means "can't appear in that slot".
+  //
+  // Memoised: the tables never change, and this used to walk ~200 entries and build a
+  // fresh array on every single charm roll. That's twice per drop, and a late-game
+  // hunter kills several monsters a second.
+  const treeCache = {};
   function legalTrees(tier, slot) {
+    const key = tier + ":" + slot;
+    if (treeCache[key]) return treeCache[key];
     const table = CHARM.tiers[tier];
     const out = [];
-    if (!table) return out;
-    for (const id in table) {
-      const row = table[id];
-      const lo = slot === 1 ? row[0] : row[2];
-      const hi = slot === 1 ? row[1] : row[3];
-      if (lo === 0 && hi === 0) continue;
-      out.push([Number(id), [lo, hi]]);
+    if (table) {
+      for (const id in table) {
+        const row = table[id];
+        const lo = slot === 1 ? row[0] : row[2];
+        const hi = slot === 1 ? row[1] : row[3];
+        if (lo === 0 && hi === 0) continue;
+        out.push([Number(id), [lo, hi]]);
+      }
     }
+    treeCache[key] = out;
     return out;
   }
 
@@ -161,13 +170,21 @@ window.ROLL = (function () {
     return Math.max(1, Math.round(c.r * c.r * 30 + c.s * 400 + Math.max(0, net) * 60));
   }
 
-  // The pot takes three charms of the SAME rarity and returns one of that rarity.
+  // The pot takes three charms of the SAME rarity and returns one a rarity HIGHER.
+  // That makes it a ladder rather than a reroll: three rarity 1s become a rarity 2,
+  // and so on up. Rarity 10 is the ceiling, so three 10s return a 10 — still worth
+  // doing, since it's a fresh roll on the best table.
+  const meldOutputRarity = r => Math.min(10, r + 1);
+
+  // A god charm is never a valid input. It's the best thing the tables can produce,
+  // and feeding one to the pot could only ever be a mistake.
   function legalMeld(a, b, c) {
     if (!a || !b || !c) return false;
+    if (isGod(a) || isGod(b) || isGod(c)) return false;
     return a.r === b.r && b.r === c.r;
   }
   function meld(a, b, c) {
-    return legalMeld(a, b, c) ? rollCharm(a.r) : null;
+    return legalMeld(a, b, c) ? rollCharm(meldOutputRarity(a.r)) : null;
   }
   // What a row costs to meld — scaled off what you're feeding it.
   const meldFee = rarity => 200 + rarity * rarity * 40;
@@ -175,6 +192,7 @@ window.ROLL = (function () {
   return {
     TAL_TIER, TIER_ORDER, SLOT_TIER_FLOOR, TIER_RARITIES,
     tierOf, tierIndex, rollCharm, rollRarity, rollSlots, legalTrees, verify, isGod,
-    treeName, charmName, charmValue, legalMeld, meld, meldFee, pickWeighted,
+    treeName, charmName, charmValue, legalMeld, meld, meldFee, meldOutputRarity,
+    pickWeighted,
   };
 })();

@@ -192,8 +192,14 @@
         can crit, so hunters get better the more you've spent on hitting harder</dd>
       <dt>Ore chip</dt><dd>Click to sell that ore at the game's real price</dd>
       <dt>God charm</dt><dd>Three slots with <b>both</b> skills at the top of their range. It
-        glows gold in the box, and Sell Junk will never take one</dd>
+        glows gold in the box, Sell Junk will never take one, and it can't be fed to the
+        pot — melding one away could only ever be a mistake</dd>
       <dt>Junk ≤</dt><dd>Sets the highest rarity Sell Junk will clear out</dd>
+      <dt>The hires</dt><dd><b>Maximeld XIV</b> reloads the Melding Pot after every hunt.
+        The <b>Argosy Captain</b> sells off ore that no remaining upgrade will ever ask for,
+        and trims the surplus of the ones that are still wanted. <b>Kokoto Gal</b> spends
+        your zenny and ore on upgrades. All three are one-off hires costing a stack of
+        G-rank ore, and between them the farm runs itself</dd>
     </dl>
 
     <div class="set-title">The box and the pot</div>
@@ -201,9 +207,11 @@
       <dt>Click a charm</dt><dd>Inspect it</dd>
       <dt>Drag to the pot</dt><dd>Load a charm into a melding slot</dd>
       <dt>Click a pot slot</dt><dd>Send that charm back to the box</dd>
-      <dt>Melding</dt><dd>Three charms of the <b>same rarity</b> become one new charm of that
-        rarity. As in the game, <b>one meld resolves per hunt</b> — load the pot, then go
-        killing. Rows resolve top-down, and each shows how many hunts away it is</dd>
+      <dt>Melding</dt><dd>Three charms of the <b>same rarity</b> become one charm of the
+        <b>next rarity up</b> — three rarity 1s make a rarity 2. Rarity 10 is the ceiling, so
+        three 10s return a 10, which is still a fresh roll on the best table. As in the game,
+        <b>one meld resolves per hunt</b> — load the pot, then go killing. Rows resolve
+        top-down, and each shows how many hunts away it is</dd>
       <dt>Auto-fill</dt><dd>Loads rows from whatever you have three-of, best rarity first</dd>
       <dt><kbd>Ctrl</kbd> + <kbd>S</kbd></dt><dd>Save to a file</dd>
       <dt><kbd>Esc</kbd></dt><dd>Close a dialog</dd>
@@ -226,7 +234,7 @@
   <div class="modal-card">
     <h2>About / Attributions</h2>
     <p>An unofficial, non-commercial fan toy: grind a Brachydios for talismans, then feed
-      three of a rarity into the Melding Pot for one fresh roll of that rarity. The charms it
+      three of a rarity into the Melding Pot to get one of the next rarity up. The charms it
       rolls are real — every skill and point value comes from the game's own charm tables, so
       nothing it produces is something MHGU couldn't give you.</p>
     <p><strong>Development:</strong> Built by the author with substantial help from
@@ -281,6 +289,11 @@
           <span class="set-hint">Those two take the whole box at once.</span></div>
         <button type="button" class="toggle" id="confirmBulkToggle" role="switch" aria-checked="true" aria-label="Confirm before emptying or bulk-selling"></button>
       </div>
+      <div class="set-row" id="kokotoRow">
+        <div class="set-label">Let Kokoto Gal spend
+          <span class="set-hint">She buys the cheapest upgrade she can after every hunt. Turn her off while you're saving for something.</span></div>
+        <button type="button" class="toggle" id="kokotoToggle" role="switch" aria-checked="true" aria-label="Let Kokoto Gal spend"></button>
+      </div>
       <div class="set-row">
         <div class="set-label">Floating damage numbers
           <span class="set-hint">Turn off if the numbers get distracting at high click rates.</span></div>
@@ -324,10 +337,10 @@
 <script src="data/charm.js?v=1"></script>
 <script src="data/skills.js?v=1"></script>
 <script src="data/ores.js?v=1"></script>
-<script src="roll.js?v=2"></script>
-<script src="farm.js?v=6"></script>
-<script src="box.js?v=3"></script>
-<script src="ui.js?v=6"></script>
-<script src="app.js?v=5"></script>
+<script src="roll.js?v=3"></script>
+<script src="farm.js?v=7"></script>
+<script src="box.js?v=4"></script>
+<script src="ui.js?v=7"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

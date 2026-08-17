@@ -288,7 +288,13 @@ window.UI = (function () {
       else if (place[r] !== undefined) { tag = `${place[r] + 1} hunts`; cls = "waiting"; }
       else if ([0, 1, 2].some(c => B.potGet(r, c))) { tag = "Not set"; cls = "blocked"; }
       else { tag = ""; cls = "idle"; }
-      html += `<div class="pot-row">${slots}<span class="pot-queue ${cls}">${tag}</span></div>`;
+      // Spell out the ladder on the row itself — three of a rarity come back as one
+      // of the next rarity up, and that's the whole reason to use the pot.
+      const inRarity = place[r] !== undefined ? B.potGet(r, 0).r : null;
+      const title = inRarity !== null
+        ? ` title="Three ${esc(window.ROLL.charmName(inRarity))} → one ${esc(window.ROLL.charmName(window.ROLL.meldOutputRarity(inRarity)))}, for ${window.ROLL.meldFee(inRarity).toLocaleString()}z"`
+        : "";
+      html += `<div class="pot-row">${slots}<span class="pot-queue ${cls}"${title}>${tag}</span></div>`;
     }
     $("pot").innerHTML = html;
 
@@ -346,6 +352,7 @@ window.UI = (function () {
       if (v) { toast(`Sold for ${v.toLocaleString()}z.`); selected = -1; renderAll(); }
     });
     el.querySelector('[data-act="pot"]').addEventListener("click", () => {
+      if (window.ROLL.isGod(c)) return toast("A god charm can't be melded.");
       const spot = firstFreePotSlot();
       if (!spot) return toast("Every melding slot is full.");
       window.BOX.potLoad(spot[0], spot[1], selected);
@@ -457,7 +464,9 @@ window.UI = (function () {
       const from = Number(ev.dataTransfer.getData("text/plain"));
       if (!Number.isInteger(from)) return;
       const [r, c] = slot.dataset.pot.split("-").map(Number);
-      if (window.BOX.potLoad(r, c, from)) { selected = -1; renderAll(); }
+      const charm = window.BOX.get(from);
+      if (charm && window.ROLL.isGod(charm)) return toast("A god charm can't be melded.");
+      if (window.BOX.potLoad(r, c, from)) { selected = -1; hideTip(); renderAll(); }
     });
     pot.addEventListener("click", ev => {
       const slot = ev.target.closest(".pot-slot");

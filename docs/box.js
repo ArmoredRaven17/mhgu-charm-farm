@@ -128,6 +128,7 @@ window.BOX = (function () {
   function potLoad(r, c, boxIndex) {
     const charm = box[boxIndex];
     if (!charm) return false;
+    if (window.ROLL.isGod(charm)) return false;   // never meld away a god charm
     const displaced = pot[r][c];
     pot[r][c] = charm;
     box[boxIndex] = displaced || null;
@@ -153,6 +154,7 @@ window.BOX = (function () {
     const row = pot[r];
     const filled = row.filter(Boolean);
     if (filled.length < 3) return `Needs ${3 - filled.length} more charm${filled.length === 2 ? "" : "s"}.`;
+    if (filled.some(window.ROLL.isGod)) return "A god charm can't be melded.";
     const rar = filled.map(c => c.r);
     if (new Set(rar).size > 1) {
       const names = [...new Set(rar)].sort((a, b) => a - b).map(x => window.ROLL.charmName(x));
@@ -205,7 +207,7 @@ window.BOX = (function () {
       if (pot[r].some(Boolean)) continue;
       const byRarity = {};
       for (let i = 0; i < BOX_SIZE; i++) {
-        if (!box[i]) continue;
+        if (!box[i] || window.ROLL.isGod(box[i])) continue;
         (byRarity[box[i].r] = byRarity[box[i].r] || []).push(i);
       }
       const pick = Object.keys(byRarity).map(Number).filter(k => byRarity[k].length >= 3)

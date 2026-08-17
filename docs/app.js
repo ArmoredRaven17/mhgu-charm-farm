@@ -199,6 +199,9 @@
     confirmBulk: settings.confirmBulk !== false,
     dmgNumbers: settings.dmgNumbers !== false,
     junkMax: settings.junkMax || 2,
+    // Kokoto Gal spends everything the moment she can, which is the point — but you
+    // may want to save for a hire, so hiring her doesn't take the wallet away.
+    kokotoActive: settings.kokotoActive !== false,
   };
   function persistSettings() { BOX.writeSettings(state); }
   UI.setConfirmBulk(state.confirmBulk);
@@ -211,6 +214,11 @@
 
   // The two models both repaint through here. FARM owns the clicker, BOX owns the
   // charms; each tells the UI when something moved rather than the UI polling.
+  // How much of a still-needed ore the Argosy Captain leaves you. Enough to cover
+  // several upgrade levels without hoarding.
+  const ARGOSY_RESERVE = 60;
+  let argosyEarned = 0;
+
   function markRunDirty() {
     // Zenny, ore and upgrades live in FARM, so a purchase or a kill has to mark the
     // save stale too — otherwise only charm movements would ever persist and a
@@ -241,6 +249,39 @@
       // full box is likelier to have room for the hunt's drops afterwards.
       const meld = BOX.resolveOneMeld();
       const placed = BOX.add(res.charms);
+
+      // Maximeld XIV reloads the pot once the hunt's drops are in, so the row that
+      // just resolved is refilled from whatever the kill produced.
+      if (FARM.lvl("maximeld") > 0) BOX.autoFill();
+
+      // The Argosy Captain clears the shelves: anything no remaining upgrade level
+      // will ever ask for goes entirely, and still-wanted ore is trimmed to a reserve
+      // so a full stack of Iron Ore isn't sitting there forever.
+      if (FARM.lvl("argosy") > 0) {
+        const need = FARM.oresStillNeeded();
+        let earned = 0;
+        for (const o of FARM.ORES) {
+          const have = FARM.state.ores[o.id] || 0;
+          if (!have) continue;
+          const keep = need.has(o.id) ? ARGOSY_RESERVE : 0;
+          if (have > keep) earned += FARM.sellOre(o.id, have - keep);
+        }
+        if (earned) argosyEarned += earned;
+      }
+
+      // Kokoto Gal spends for you. Buys the cheapest affordable upgrade repeatedly —
+      // the bound is belt-and-braces: every purchase raises its own next cost, so the
+      // loop terminates on its own, but a runaway here would freeze the tab.
+      if (FARM.lvl("kokoto") > 0 && state.kokotoActive) {
+        for (let i = 0; i < 40; i++) {
+          const pick = FARM.UPGRADES
+            .map(u => ({ u, lv: FARM.lvl(u.id) }))
+            .filter(o => o.lv < o.u.max && !FARM.canBuy(o.u.id))
+            .sort((a, b) => FARM.zennyCost(a.u, a.lv) - FARM.zennyCost(b.u, b.lv))[0];
+          if (!pick) break;
+          FARM.buy(pick.u.id);
+        }
+      }
       // A god charm outranks every other thing the hunt could tell you about.
       const god = res.charms.find(ROLL.isGod) || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
       if (god) {
@@ -331,6 +372,13 @@
   });
   bindToggle("dmgNumbersToggle", () => state.dmgNumbers, v => {
     state.dmgNumbers = v; UI.setShowDamage(v); persistSettings();
+  });
+  bindToggle("kokotoToggle", () => state.kokotoActive, v => {
+    state.kokotoActive = v; persistSettings();
+  });
+  // She isn't hired yet, so the switch would be a control for nothing.
+  $("settingsBtn").addEventListener("click", () => {
+    $("kokotoRow").classList.toggle("hidden", FARM.lvl("kokoto") === 0);
   });
 
   $("clearLocalBtn").addEventListener("click", () => {
