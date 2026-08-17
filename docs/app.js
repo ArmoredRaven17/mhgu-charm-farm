@@ -182,6 +182,7 @@
     BOX.load(obj);
     UI.page = 0;
     UI.clearSelection();
+    numberLegacyGodCharms();
     buildSwatches();          // a different save has met a different set of coats
     restoreTheme();
     UI.renderAll();
@@ -457,6 +458,37 @@
       $("restoreNo").addEventListener("click", () => $("restoreBanner").classList.add("hidden"));
     }
   }
+
+  // God charms found before they were stamped carry no number, even though the tally
+  // has always been kept. They can't be sold or melded, so the ones in the box are in
+  // roughly the order they were found — number them from the lowest unused value.
+  //
+  // No hunt count is invented for them. That figure was only ever spoken in a toast
+  // and never written down, so it isn't recoverable; those charms show their number
+  // and no "Found at" line, which is the truth about what's known.
+  function numberLegacyGodCharms() {
+    const used = new Set();
+    const unstamped = [];
+    for (let i = 0; i < BOX.BOX_SIZE; i++) {
+      const c = BOX.get(i);
+      if (!c || !ROLL.isGod(c)) continue;
+      if (c.g) used.add(c.g); else unstamped.push(c);
+    }
+    if (!unstamped.length) return 0;
+    let next = 1;
+    for (const c of unstamped) {
+      while (used.has(next)) next++;
+      c.g = next;
+      used.add(next);
+    }
+    // The tally can't be lower than the number of charms actually sitting in the box.
+    let highest = 0;
+    used.forEach(n => { if (n > highest) highest = n; });
+    if ((FARM.state.gods || 0) < highest) FARM.state.gods = highest;
+    BOX.markDirty();
+    return unstamped.length;
+  }
+  numberLegacyGodCharms();
 
   // Now that the run state is loaded, the picker knows which coats you've met.
   buildSwatches();
