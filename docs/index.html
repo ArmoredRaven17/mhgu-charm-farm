@@ -43,15 +43,16 @@
         <button type="button" class="arena-target" id="target" aria-label="Attack">
           <img id="targetImg" src="assets/MonsterIcons/MHGU-Brachydios_Icon.webp" alt="">
         </button>
-        <!-- Two columns, filled by row, so Affinity and Critical end up stacked in the
-             right-hand one — they're the pair you read together. -->
+        <!-- Two columns, filled by row. Down the left is where the damage comes from —
+             your clicks, the Palicoes, the hired hunters. Down the right is what the
+             hunt gives back for it. -->
         <div class="arena-stats">
           <span><b>Attack:</b> <i id="statDmg" title="Damage per click">1 dmg/click</i></span>
           <span><b>Affinity:</b> <i id="statCrit" title="Chance of a critical hit">0%</i></span>
           <span><b>Palico:</b> <i id="statDps">0 dmg/s</i></span>
           <span><b>Critical:</b> <i id="statCritMult" title="Critical damage multiplier">1.00x</i></span>
-          <span><b>Charm:</b> <i id="statDrop">1/hunt</i></span>
           <span><b>Hunters:</b> <i id="statAuto">0 clicks/s</i></span>
+          <span><b>Charm:</b> <i id="statDrop">1/hunt</i></span>
           <!-- Hidden until you've found one; a permanent "God 0" would just be a
                reminder of what you haven't got. -->
           <span id="statGodsWrap" class="hidden"><b>God:</b> <i id="statGods">0</i></span>
