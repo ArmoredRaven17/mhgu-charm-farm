@@ -224,6 +224,8 @@
     confirmBulk: settings.confirmBulk !== false,
     junkMax: settings.junkMax || 2,
     autoSort: !!settings.autoSort,
+    sortKey: settings.sortKey || "",
+    sortDir: settings.sortDir === "asc" ? "asc" : "desc",
     // Which hires are stood down. Kokoto Gal used to be the only one you could switch
     // off, from Settings; that single flag is carried over here.
     hiresPaused: Object.assign(
@@ -418,6 +420,8 @@
   UI.setJunkMax(state.junkMax);
   UI.setAutoSort(state.autoSort);
   UI.setHiresPaused(state.hiresPaused);
+  UI.setSortDir(state.sortDir);
+  UI.setSortKey(state.sortKey);
 
   // Restore. With browser-save on it loads silently; with it off, the banner offers
   // the choice rather than throwing away last session's work without asking.

@@ -552,11 +552,13 @@ window.UI = (function () {
     });
     sortKey.addEventListener("change", () => {
       applySort.disabled = !sortKey.value;
+      hooks.settingChanged("sortKey", sortKey.value);
       if (autoSort && sortKey.value) { maybeAutoSort(); renderAll(); }
     });
     sortDirBtn.addEventListener("click", () => {
       sortDir = sortDir === "desc" ? "asc" : "desc";
       sortDirBtn.textContent = sortDir === "desc" ? "Desc ↓" : "Asc ↑";
+      hooks.settingChanged("sortDir", sortDir);
       if (autoSort && sortKey.value) { maybeAutoSort(); renderAll(); }
     });
     applySort.addEventListener("click", () => {
@@ -649,6 +651,21 @@ window.UI = (function () {
 
   const setConfirmBulk = v => { confirmBulk = !!v; };
   const setHiresPaused = o => { hiresPaused = Object.assign({}, o || {}); };
+  // Restoring the sort has to drive the DOM as well as the model — browsers restore
+  // a <select>'s own position across a reload, which would otherwise leave the
+  // control showing one thing while the saved setting said another.
+  const setSortKey = v => {
+    const sel = $("sortKey"), apply = $("applySort");
+    if (!sel) return;
+    const valid = [...sel.options].some(o => o.value === v);
+    sel.value = valid ? v : "";
+    if (apply) apply.disabled = !sel.value;
+  };
+  const setSortDir = v => {
+    sortDir = v === "asc" ? "asc" : "desc";
+    const btn = $("sortDir");
+    if (btn) btn.textContent = sortDir === "desc" ? "Desc ↓" : "Asc ↑";
+  };
   const setAutoSort = v => {
     autoSort = !!v;
     const el = $("autoSortToggle");
@@ -665,7 +682,8 @@ window.UI = (function () {
     buildGrid, renderAll, renderArena, renderGrid, renderPot, renderDetail, renderOres,
     renderShop, renderRoster, initEvents, toast, hitFlash, slash,
     showHit, flashFresh,
-    setConfirmBulk, setJunkMax, setAutoSort, setHiresPaused, maybeAutoSort,
+    setConfirmBulk, setJunkMax, setAutoSort, setHiresPaused, setSortKey, setSortDir,
+    maybeAutoSort,
     clearSelection, hideTip, esc,
     get page() { return page; },
     set page(p) { page = p; },
