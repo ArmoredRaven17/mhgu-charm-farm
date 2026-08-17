@@ -105,14 +105,18 @@ kbd{
   background-repeat:repeat;background-size:auto,200px 200px;
 }
 .farm-col{display:flex;flex-direction:column;min-height:0;min-width:0}
-/* Both side columns overflow their height by design and scroll. Without this, flex
+/* The side columns overflow their height by design and scroll. Without this, flex
    compresses each child to make them fit instead — which squashed the pot's status
    line to two lines and let its text spill over the slots below it. Let the children
    keep their natural height and let the column scroll. */
-.arena-col > *,.pot-col > *{flex-shrink:0}
-.arena-col{flex:0 0 310px;border-right:1px solid var(--line);overflow-y:auto}
-.pot-col{flex:0 0 320px;border-left:1px solid var(--line);overflow-y:auto}
-.arena-col,.pot-col{
+.arena-col > *,.smithy-col > *,.pot-col > *{flex-shrink:0}
+/* The arena holds the monster and your ore — both things you want in view while
+   shopping — and the smithy scrolls independently beside it, so a long upgrade list
+   never pushes the Brachydios off screen. */
+.arena-col{flex:0 0 264px;border-right:1px solid var(--line);overflow-y:auto}
+.smithy-col{flex:0 0 290px;border-right:1px solid var(--line);overflow-y:auto}
+.pot-col{flex:0 0 300px;border-left:1px solid var(--line);overflow-y:auto}
+.arena-col,.smithy-col,.pot-col{
   background-color:var(--panel-bg);
   background-image:
     linear-gradient(color-mix(in srgb,var(--panel-bg) 90%,transparent),color-mix(in srgb,var(--panel-bg) 90%,transparent)),
@@ -126,7 +130,7 @@ kbd{
 }
 
 /* ── Arena ───────────────────────────────────────────────────────────── */
-.arena{padding:6px 14px 14px;text-align:center;position:relative}
+.arena{padding:6px 12px 14px;text-align:center;position:relative}
 .arena-name{font-size:15px;font-weight:700;line-height:1.25;margin:0 0 2px;min-height:38px;
   display:flex;align-items:center;justify-content:center}
 .arena-rank{font-size:11px;opacity:.6;margin-bottom:8px}
@@ -513,9 +517,10 @@ kbd{
 .restore-banner{z-index:30;display:flex;align-items:center;gap:10px}
 .toast{z-index:40;background:#222;max-width:min(520px,90vw);text-align:center}
 
-@media (max-width:1100px){
+/* Four fixed columns plus the grid need more room than three did. */
+@media (max-width:1240px){
   .farm-layout{flex-direction:column;overflow-y:auto}
-  .arena-col,.pot-col{flex:none;width:auto;border:none;border-bottom:1px solid var(--line)}
+  .arena-col,.smithy-col,.pot-col{flex:none;width:auto;border:none;border-bottom:1px solid var(--line)}
   .box-col{flex:none}
   .box-grid-area{overflow:visible;padding:10px}
   /* Stacked, the grid area has no height of its own to measure against, so
