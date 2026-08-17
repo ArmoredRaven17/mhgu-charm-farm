@@ -12,6 +12,12 @@ window.UI = (function () {
     brachy: "assets/MonsterIcons/MHGU-Brachydios_Icon.webp",
     raging: "assets/MonsterIcons/MHGU-Raging_Brachydios_Icon.webp",
   };
+  // Damage figures read x10 on screen, purely so they land in Monster Hunter's range
+  // rather than single digits. Presentation only — nothing in farm.js knows about it,
+  // the monster's health is untouched, and no balance number changes. Every damage
+  // figure in the app goes through this, so they stay comparable with each other.
+  const DAMAGE_DISPLAY = 10;
+
   const oreIcon = id => "assets/OreIcons/" + window.FARM.oreById[id].icon;
   const charmIcon = c => `assets/icons/icon_talisman_r${c.r}.png`;
 
@@ -50,15 +56,22 @@ window.UI = (function () {
     // what a crit is actually worth.
     const base = F.clickDamage(), critMult = F.critMult(), chance = F.critChance();
     const avg = base * (1 + chance * (critMult - 1));
-    $("statDmg").textContent = base.toLocaleString();
-    $("statDmg").title = `${base.toLocaleString()} damage per click. ` +
-      `A crit deals ${Math.round(base * critMult).toLocaleString()} ` +
-      `(${Math.round(chance * 100)}% chance — the pink slash), averaging ${avg.toFixed(1)} per hit. ` +
+    const rate = F.autoClicks();
+    const dmg = n => Math.round(n * DAMAGE_DISPLAY).toLocaleString();
+    $("statDmg").textContent = dmg(base);
+    $("statDmg").title = `${dmg(base)} damage per click. ` +
+      `A crit deals ${dmg(base * critMult)} ` +
+      `(${Math.round(chance * 100)}% chance — the pink slash), averaging ${dmg(avg)} per hit. ` +
       `Hired hunters attack for the same.`;
     $("statCrit").textContent = Math.round(chance * 100) + "% · " + critMult.toFixed(2) + "x";
     $("statCrit").title = `${Math.round(chance * 100)}% chance to deal ${critMult.toFixed(2)}x damage.`;
-    $("statDps").textContent = F.dps() + "/s";
-    $("statAuto").textContent = F.autoClicks() + "/s";
+    $("statDps").textContent = dmg(F.dps()) + "/s";
+    $("statDps").title = `${dmg(F.dps())} damage per second from hired Palicoes, hands-free.`;
+    $("statAuto").textContent = rate + "/s";
+    $("statAuto").title = rate
+      ? `${rate} attack${rate === 1 ? "" : "s"} per second, each for your click damage — ` +
+        `about ${dmg(rate * avg)} damage per second.`
+      : "No hunters hired yet. Each one attacks once a second for your click damage.";
     $("statDrop").textContent = F.dropCount();
 
     $("zennyPill").textContent = Math.floor(s.zenny).toLocaleString() + "z";
