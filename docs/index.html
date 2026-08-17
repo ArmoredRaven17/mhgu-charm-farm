@@ -53,6 +53,11 @@
           <span><b>Critical:</b> <i id="statCritMult" title="Critical damage multiplier">1.00x</i></span>
           <span><b>Hunters:</b> <i id="statAuto">0 clicks/s</i></span>
           <span><b>Charm:</b> <i id="statDrop">1/hunt</i></span>
+          <!-- The two skills whose effect is otherwise invisible: everything else here
+               shows up in the fight, but Crazy Lucky Cat and Good Luck only show up in
+               your wallet and your ore stock. Kept as a pair on their own row. -->
+          <span><b>Zenny:</b> <i id="statZenny" title="Crazy Lucky Cat">+0%</i></span>
+          <span><b>Ore:</b> <i id="statOre" title="Good Luck">+0/hunt</i></span>
           <!-- No god charm count here: the titlebar pill carries it, and this panel is
                about the fight in front of you. -->
         </div>
@@ -380,7 +385,7 @@
 <script src="roll.js?v=6"></script>
 <script src="farm.js?v=26"></script>
 <script src="box.js?v=10"></script>
-<script src="ui.js?v=30"></script>
+<script src="ui.js?v=31"></script>
 <script src="app.js?v=26"></script>
 </body>
 </html>

@@ -102,6 +102,18 @@ window.UI = (function () {
     const drop = F.dropCount();
     $("statDrop").textContent = drop + "/hunt";
     $("statDrop").title = `${drop} charm${drop === 1 ? "" : "s"} from every kill.`;
+    // Crazy Lucky Cat and Good Luck pay out away from the arena, so this is the only
+    // place their effect is visible at all.
+    const zPct = Math.round((F.zennyMult() - 1) * 100);
+    $("statZenny").textContent = "+" + zPct + "%";
+    $("statZenny").title = zPct
+      ? `Crazy Lucky Cat: every kill pays ${zPct}% more zenny.`
+      : "Crazy Lucky Cat adds zenny to every kill. Not bought yet.";
+    const oreN = F.oreBonus();
+    $("statOre").textContent = "+" + oreN + "/hunt";
+    $("statOre").title = oreN
+      ? `Good Luck: ${oreN} extra ore from every hunt, on top of the usual 2-4.`
+      : "Good Luck adds ore to every hunt. Not bought yet.";
     // The god charm tally lives in the titlebar, not down here with the fight.
     const gods = F.state.gods || 0;
     $("godPill").classList.toggle("hidden", gods === 0);
