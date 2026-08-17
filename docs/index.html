@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=18">
+<link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body>
 <div id="app">
@@ -16,6 +16,11 @@
     <h1>MHGU Charm Farm</h1>
     <span id="zennyPill" class="progress-pill first" title="Zenny">0z</span>
     <span id="capacityPill" class="progress-pill" title="Charms in the box">0 / 2000</span>
+    <!-- Hidden until the first one turns up: a pill reading "0" for the first several
+         thousand hunts is just a reminder you haven't got one. -->
+    <span id="godPill" class="progress-pill god-pill hidden" title="God charms found">
+      <img src="assets/icons/icon_talisman_r10.png" alt="" class="god-pill-icon"><span id="godPillCount">0</span>
+    </span>
     <button id="saveBtn"   class="btn tiny">Save <span id="dirtyDot" class="dirty-dot hidden">●</span></button>
     <button id="saveAsBtn" class="btn tiny">Save As…</button>
     <button id="openBtn"   class="btn tiny">Open…</button>
@@ -356,7 +361,7 @@
 <script src="roll.js?v=6"></script>
 <script src="farm.js?v=23"></script>
 <script src="box.js?v=10"></script>
-<script src="ui.js?v=23"></script>
+<script src="ui.js?v=24"></script>
 <script src="app.js?v=22"></script>
 </body>
 </html>

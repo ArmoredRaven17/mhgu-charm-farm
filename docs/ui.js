@@ -99,6 +99,11 @@ window.UI = (function () {
     $("statGodsWrap").classList.toggle("hidden", gods === 0);
     $("statGods").textContent = gods.toLocaleString();
     $("statGods").title = `${gods} god charm${gods === 1 ? "" : "s"} found in ${s.kills.toLocaleString()} hunts.`;
+    // The same tally again in the titlebar, where it stays visible whichever panel
+    // you're scrolled to.
+    $("godPill").classList.toggle("hidden", gods === 0);
+    $("godPillCount").textContent = gods.toLocaleString();
+    $("godPill").title = `${gods} god charm${gods === 1 ? "" : "s"} found in ${s.kills.toLocaleString()} hunts.`;
 
     $("zennyPill").textContent = Math.floor(s.zenny).toLocaleString() + "z";
   }
