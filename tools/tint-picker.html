@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Charm Farm — Brachydios tint picker</title>
+<!--
+  A design tool, not part of the app. Assign a tint to each Brachydios variant, then
+  copy the result out and hand it back to be wired into docs/farm.js.
+
+  Self-contained on purpose: both sprites are embedded as data URIs, so this works by
+  double-clicking the file. No server, no build, nothing to install.
+-->
+<style>
+:root{
+  --bg:#0d1420; --panel:#151d2b; --line:#ffffff1f; --text:#f3f3f3; --dim:#9aa6b8;
+  --accent:#4a7fb5; --good:#7fdc7f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Segoe UI",system-ui,sans-serif;font-size:14px;padding:18px 22px 60px}
+h1{font-size:18px;margin:0 0 4px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);
+  margin:22px 0 8px;font-weight:600}
+p.hint{color:var(--dim);margin:0 0 14px;line-height:1.5;max-width:70ch}
+kbd{background:#ffffff1a;border:1px solid var(--line);border-radius:3px;padding:0 5px;font-size:.85em}
+
+/* ── Palette ─────────────────────────────────────────────── */
+.controls{display:flex;gap:18px;flex-wrap:wrap;align-items:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px}
+.ctl{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.ctl input[type=range]{width:120px}
+.ctl output{font-variant-numeric:tabular-nums;min-width:34px;color:var(--dim)}
+
+.matrix{display:grid;grid-template-columns:42px repeat(4,1fr);gap:5px;align-items:center}
+.matrix .colhead{font-size:11.5px;font-weight:600;color:var(--dim);text-align:center;line-height:1.3;padding-bottom:4px}
+.matrix .rowhead{font-size:11.5px;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
+.swatch{background:#0a0f18;border:1px solid transparent;border-radius:7px;padding:5px;
+  display:flex;align-items:center;justify-content:center;cursor:grab;transition:border-color .12s}
+.swatch:hover{border-color:var(--accent)}
+.swatch.picked{border-color:var(--good);box-shadow:0 0 0 1px var(--good)}
+.swatch img{width:100%;max-width:60px;aspect-ratio:1;object-fit:contain;pointer-events:none}
+
+/* ── Slots ───────────────────────────────────────────────── */
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:10px}
+.slot{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+.slot.over{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.slot.empty .art{opacity:.25}
+.slot-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:6px}
+.slot-name{font-size:12.5px;font-weight:600;line-height:1.2}
+.slot-rank{font-size:10.5px;color:var(--dim);white-space:nowrap}
+.art{background:#0a0f18;border-radius:7px;padding:8px;display:flex;align-items:center;justify-content:center;
+  min-height:86px;cursor:pointer}
+.art img{width:70px;height:70px;object-fit:contain;pointer-events:none}
+.slot-src{font-size:10.5px;color:var(--dim);margin-top:5px;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fine{display:grid;grid-template-columns:auto 1fr auto;gap:4px 6px;align-items:center;margin-top:7px;font-size:10.5px;color:var(--dim)}
+.fine input[type=range]{width:100%}
+.fine output{font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
+
+/* ── Output ──────────────────────────────────────────────── */
+textarea{width:100%;min-height:190px;background:#0a0f18;color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.5}
+button{background:#ffffff14;color:var(--text);border:1px solid var(--line);border-radius:7px;
+  padding:7px 14px;cursor:pointer;font-size:13px}
+button:hover{background:#ffffff24}
+button.primary{background:var(--accent);border-color:var(--accent)}
+.row{display:flex;gap:8px;align-items:center;margin:10px 0}
+.said{color:var(--good);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<h1>Brachydios tint picker</h1>
+<p class="hint">
+  Drag a tint from the matrix onto a variant below — or <b>click a tint to pick it up</b>,
+  then click the variants you want it on. Each slot has its own saturation and brightness,
+  so set the hue from the matrix and fine-tune per variant. When you're happy, hit
+  <b>Copy for Claude</b> and paste the result back into the chat.
+  <br><kbd>Alt</kbd>+click a slot clears it back to no tint.
+</p>
+
+<div class="controls">
+  <div class="ctl"><label for="pSat">Palette saturation</label>
+    <input type="range" id="pSat" autocomplete="off" min="0" max="3" step="0.05" value="1.5"><output id="pSatOut">1.50</output></div>
+  <div class="ctl"><label for="pBright">Palette brightness</label>
+    <input type="range" id="pBright" autocomplete="off" min="0.3" max="2" step="0.05" value="1"><output id="pBrightOut">1.00</output></div>
+  <div class="ctl"><label for="hueStep">Hue step</label>
+    <select id="hueStep"><option value="30">30°</option><option value="20">20°</option><option value="15">15°</option><option value="45">45°</option></select></div>
+  <span id="picked" class="said"></span>
+</div>
+
+<div class="matrix" id="matrix"></div>
+
+<h2>Variants</h2>
+<div class="slots" id="slots"></div>
+
+<h2>Result</h2>
+<div class="row">
+  <button class="primary" id="copyBtn">Copy for Claude</button>
+  <button id="resetBtn">Reset to current roster</button>
+  <span id="copied" class="said"></span>
+</div>
+<textarea id="out" readonly></textarea>
+
+<script>
+const SPRITES = {
+  brachy: "data:image/webp;base64,UklGRtQDAABXRUJQVlA4TMgDAAAvj8AjEH/iOrZtNdlxd0+qSYCqacYd/u1JG44j2VaV+e7uhqxYExcxEZ+7261y3Nq2quzk27nfR4b1QCuURkGUwZShu35N5j8A/TQPAsa2AcJbBLDtPUEDGoIVTo0hL0DOkl6kpYzAIQAIb4CAfN5m5u8jDfqHt+Ci3Tn7A9d8ehtX7dRMa9SIujpcGeWax9mn9NOTqMZ1Ri4OYYuwG/0bAcJKfIBtxLuyTxq7uOG+l2zMB8HGW9acmcM1Kn6z4RmOGJgmTMAjYrx7sS0kjURdyMuXGNjAB8LBa1l70tjOtzaLA9vZgWwBkAxJsm312bbN9e7//07kRGTUOvcpov+S3EaSJEk6enePe2AyFs/lAX1XQm7BXfgTniwrcAIuwRUycpiAnE8H68lfuGUZ+dyDxxcLRuGKdBR6uYzDetH4B2yfk6/gfXgXejFNeyxYJuO6qiHf4H+oeWH5LvUjnIMC2/ZxqRleKObktlhOxCbhKDzZWLFo9it8RrbFIkej5tRxGPNtHsrzLBinwjGo6/JrY4z8UmtH27gswpXUGRi15HnouZXPC217xVnI83Hd6KD+v6zzWYQ9HJscy88LRkhaP7z+A+dyEx7CIzgqnYFBT42p/nrN/Q5/Ha8dXihqnSJHbfU+z9vrxTzrEflwXhyqGXkoz220Wd1vH4Q6lo9v21wcedcMbz7mebQ9j/wMkJOPSVuNE7ButJ0nzPlaOg31PKxr1znmf0Gv93wGqR/He7+P6Yecj16z/Vg+zvoaqyFePyqHzw/jUPct/LOlvs44dz7f6nW8dvh7NC8P//zpxXi8dN5M5Kr3FbUmz/kGzGP6HOLnrdfxmuGH+o5NfT/Qwz+D6F4Jr+N1or3O42EDvoX6nvIw9OB6dR4LMMZP7ysKxol4Bz6Fr+Eb+E7qw/9AzgDUfYz6sgdfpL6H61CfJdr7apxb1K77GHXlAO7BnIcwvxfs7yu93sYS1H2VmrKV+hI+gFzPCLkGe9bzVH4OgZ91ydHreC3ZsvwDuW4mxiTGJnk+M1X3Mfi64XlYr+N1ZBsyO/AXHE19CL1nxf1Q3sfw1vE68h36180+mdf/CN6Cfi35j3jreM1oz5uJMfHecXoCP0GvZ9rWn/fW8Rqicw1+wR24lfoY3oaR33Xo90v92CCp1/F6sgu3Un/DzzA/a/J7/vzef1ssxkrXz/2PgtHsD8j8g1/gJlyFXNvJPQfj9d/ryRAcPdXOwxXYdV1XS95J/T5o/myC7nPl77l5+dWQ4wl9gNeg/10jr+d+vLlwD75YXCXZBw==",
+  raging: "data:image/webp;base64,UklGRhwEAABXRUJQVlA4TA8EAAAvj8AjEAfjNrZtpdrvPlxCSy2lHPqHTKPv8qQNJ7ZtO82h9yZRaBQDYkrMD4nEpr+b8lYcR7KtKv0Fd90TBvkHQQhvicP9TpBtU6j5E9zpAdz/1z/AACKAgBmEAYQxGKYKTQUkG1yExEDcnmv3LyYM6lVTBowZBt57v2hEn4XfveG8ZgRMYQF2GHh5hyoItQgkZT+meBSCIPy983PkS9CH8zzz6ZSKDjAQgUAYCAj6g32GBBaQNOcrfN7T0cg3eVdc/lu98Yo6H5sKmOFyFwAEA2gqgBTuhimmDGzGpJ1s+pJPbeQiXd6qcErrDAXGqaJPgvWmm0PL1rwnwbZTAmRLsq26jYLXYeZYNxwzs8Ig8Amb2f//Get4rb2vFNp+iui/JEmSFElyPcZC1EBGVzQ8oHYspIATcB163/9neAIlyT3kXpowCQ2IZ65C4ZL7uQ3voDu1nASllMiMlKAJ8UrF63B7RuowAEvg61mnei1nmuTfqxjmJuyBTumyYVqDiyBi0qVqX5eYxVfKZ3K1mi8/IUFva8FKZTswAHXw17Yg95hMpakJ05BL1b4uActv4SPk2Ocvh/vj8PWL3ylT7FKAP2+gMH0h3Mc96IA+W/X9gj5/dW0F+DyOW8aAr0enAUXXnCFcs+8XHCUpfinhK5yHc/AQHsMPyDmAfUjSXTgJfVAz+ec1l/xzPHZ5ALk0CpxxOCDJ7TvkEt+H2rV8zuro85f74lLMwiW9uxqDeZIq4+u/AN9A1+y5Xe0snoSYxS4liaPPVbum578O92pE0uG9fMziK9n96h7s/u/DKeBzWF+7veuy7zk5vyCllAKWrrJLeo7zfewO8Pnrr9n/p/4di2F856Uv09CENjkE372lvQfj3meJnuOxi/8xmt2HDvf7AXJ8Nf562X2/hXwW6zke69g9fwK7pvdd/r71HI9Z/KVa12wAPx9YLfbXhK8v13iOxy56dncn62QDuNQCX/h6uQ99juvHFQFLT/Dr6bZhFfTrEvzx/QevYRn0HI9vnkJp2oQF0M//+Xdd9r1pfnyo9xhxTQGXwM4Y+J4LFjHZmQS9V4lpClM/jEAyLcKReW7i1yHwLLej53gs439fSjKNQD9sSDWJz1v7POZ+9ByPY04D5zJJpjEopTrxl+w9hm+OxzE3wP97cw1eQmkagvdQc7P/iG+OxzG+vZb9XkvOIDwC386Ur8HfzxToOR7D7BLun89h30zn1yxMgH9f6q+1iJ7jsYw9z8+SK3AL7HvNI+/zJ81ms2nX7P2Gvn7ef8Qs1ec55w48hxcwDLy36N3rYHz793jmO6Tf2hzMQKPRaMQyBfQR+75Bz2vfc8J2LysrKyv+/l5B7FJ9D6Y/H8n/uUa+nXt3e+EdfLBynKQGAA==",
+};
+
+// The roster, prefilled with what docs/farm.js currently ships.
+const VARIANTS = [
+  { id:"base",        name:"Brachydios",        rank:0, icon:"brachy", invert:false, hue:0,   sat:1,    bright:1 },
+  { id:"iron",        name:"Iron",              rank:0, icon:"brachy", invert:false, hue:0,   sat:0.2,  bright:1.05 },
+  { id:"earth",       name:"Earth Crystal",     rank:0, icon:"brachy", invert:true,  hue:180, sat:0.35, bright:1.05 },
+  { id:"machalite",   name:"Machalite",         rank:0, icon:"brachy", invert:false, hue:350, sat:1.5,  bright:1.05 },
+  { id:"dragonite",   name:"Dragonite",         rank:0, icon:"brachy", invert:false, hue:260, sat:1.4,  bright:1 },
+  { id:"carbalite",   name:"Carbalite",         rank:1, icon:"brachy", invert:false, hue:60,  sat:1.5,  bright:1 },
+  { id:"fucium",      name:"Fucium",            rank:1, icon:"brachy", invert:false, hue:112, sat:1.45, bright:1.5 },
+  { id:"lightcrystal",name:"Lightcrystal",      rank:1, icon:"brachy", invert:false, hue:0,   sat:0.04, bright:1.8 },
+  { id:"firecell",    name:"Firecell",          rank:1, icon:"brachy", invert:true,  hue:20,  sat:1.6,  bright:1.1 },
+  { id:"eltalite",    name:"Eltalite",          rank:2, icon:"brachy", invert:false, hue:140, sat:1.9,  bright:1 },
+  { id:"allfire",     name:"Allfire",           rank:2, icon:"raging", invert:false, hue:0,   sat:2.2,  bright:0.55 },
+  { id:"purecrystal", name:"Purecrystal",       rank:2, icon:"raging", invert:false, hue:165, sat:1.5,  bright:1.3 },
+  { id:"ultimas",     name:"Ultimas",           rank:2, icon:"raging", invert:false, hue:55,  sat:2.2,  bright:1.25 },
+  { id:"raging",      name:"Raging Brachydios", rank:2, icon:"raging", invert:false, hue:0,   sat:1,    bright:1 },
+];
+const DEFAULTS = JSON.parse(JSON.stringify(VARIANTS));
+const RANKS = ["Low", "High", "G"];
+
+const TREATMENTS = [
+  { label:"Base + hue",           icon:"brachy", invert:false },
+  { label:"Base inverted + hue",  icon:"brachy", invert:true  },
+  { label:"Raging + hue",         icon:"raging", invert:false },
+  { label:"Raging inverted + hue",icon:"raging", invert:true  },
+];
+
+const $ = id => document.getElementById(id);
+const round2 = n => Math.round(n * 100) / 100;
+
+// The CSS filter for a variant, in the exact form farm.js wants.
+function filterOf(v) {
+  const parts = [];
+  if (v.invert) parts.push("invert(1)");
+  if (v.hue % 360 !== 0) parts.push(`hue-rotate(${v.hue}deg)`);
+  if (round2(v.sat) !== 1) parts.push(`saturate(${round2(v.sat)})`);
+  if (round2(v.bright) !== 1) parts.push(`brightness(${round2(v.bright)})`);
+  return parts.length ? parts.join(" ") : "none";
+}
+const cssOf = v => filterOf(v) === "none" ? "" : filterOf(v);
+
+let held = null;        // tint picked up by clicking, waiting to be dropped
+
+// ── Palette ────────────────────────────────────────────────
+function drawMatrix() {
+  const step = Number($("hueStep").value);
+  const sat = Number($("pSat").value), bright = Number($("pBright").value);
+  const hues = [];
+  for (let d = 0; d < 360; d += step) hues.push(d);
+
+  let h = `<div></div>`;
+  for (const t of TREATMENTS) h += `<div class="colhead">${t.label}</div>`;
+  for (const deg of hues) {
+    h += `<div class="rowhead">${deg}°</div>`;
+    for (let c = 0; c < TREATMENTS.length; c++) {
+      const t = TREATMENTS[c];
+      const v = { icon:t.icon, invert:t.invert, hue:deg, sat, bright };
+      const key = `${c}:${deg}`;
+      h += `<div class="swatch" draggable="true" data-key="${key}" title="${t.label}, ${deg}°">
+        <img src="${SPRITES[t.icon]}" alt="" style="filter:${cssOf(v)}"></div>`;
+    }
+  }
+  $("matrix").innerHTML = h;
+  markPicked();
+}
+
+function tintFromKey(key) {
+  const [c, deg] = key.split(":").map(Number);
+  const t = TREATMENTS[c];
+  return { icon:t.icon, invert:t.invert, hue:deg,
+           sat:Number($("pSat").value), bright:Number($("pBright").value), label:`${t.label} ${deg}°` };
+}
+const markPicked = () => document.querySelectorAll(".swatch").forEach(s =>
+  s.classList.toggle("picked", !!held && s.dataset.key === held.key));
+
+$("matrix").addEventListener("click", ev => {
+  const s = ev.target.closest(".swatch");
+  if (!s) return;
+  held = (held && held.key === s.dataset.key) ? null : Object.assign(tintFromKey(s.dataset.key), { key:s.dataset.key });
+  $("picked").textContent = held ? `Holding ${held.label} — click a variant to apply` : "";
+  markPicked();
+});
+$("matrix").addEventListener("dragstart", ev => {
+  const s = ev.target.closest(".swatch");
+  if (!s) return;
+  ev.dataTransfer.setData("text/plain", s.dataset.key);
+  ev.dataTransfer.effectAllowed = "copy";
+});
+
+// ── Slots ──────────────────────────────────────────────────
+function drawSlots() {
+  $("slots").innerHTML = VARIANTS.map((v, i) => {
+    const none = filterOf(v) === "none";
+    return `<div class="slot${none ? " empty" : ""}" data-i="${i}">
+      <div class="slot-head"><span class="slot-name">${v.name}</span>
+        <span class="slot-rank">${RANKS[v.rank]}</span></div>
+      <div class="art"><img src="${SPRITES[v.icon]}" alt="" style="filter:${cssOf(v)}"></div>
+      <div class="slot-src">${v.icon === "raging" ? "Raging" : "Base"}${v.invert ? " · inverted" : ""} · ${v.hue}°</div>
+      <div class="fine">
+        <label>Sat</label><input type="range" autocomplete="off" data-f="sat" data-i="${i}" min="0" max="3" step="0.05" value="${v.sat}">
+        <output>${round2(v.sat).toFixed(2)}</output>
+        <label>Bright</label><input type="range" autocomplete="off" data-f="bright" data-i="${i}" min="0.3" max="2" step="0.05" value="${v.bright}">
+        <output>${round2(v.bright).toFixed(2)}</output>
+      </div></div>`;
+  }).join("");
+  // Browsers restore form-control positions across a reload, which would leave the
+  // sliders showing one thing while the model — and therefore the copied output —
+  // held another. Force each back to the model after rendering.
+  document.querySelectorAll("#slots input[type=range]").forEach(r => {
+    r.value = VARIANTS[Number(r.dataset.i)][r.dataset.f];
+  });
+  writeOut();
+}
+
+function applyTint(i, tint) {
+  Object.assign(VARIANTS[i], { icon:tint.icon, invert:tint.invert, hue:tint.hue, sat:tint.sat, bright:tint.bright });
+  drawSlots();
+}
+
+$("slots").addEventListener("click", ev => {
+  const slot = ev.target.closest(".slot");
+  if (!slot || ev.target.matches("input")) return;
+  const i = Number(slot.dataset.i);
+  if (ev.altKey) {                       // Alt-click wipes it back to untinted
+    Object.assign(VARIANTS[i], { invert:false, hue:0, sat:1, bright:1 });
+    return drawSlots();
+  }
+  if (held) applyTint(i, held);
+});
+$("slots").addEventListener("input", ev => {
+  const el = ev.target;
+  if (!el.matches("input[type=range]")) return;
+  VARIANTS[Number(el.dataset.i)][el.dataset.f] = Number(el.value);
+  drawSlots();
+});
+$("slots").addEventListener("dragover", ev => {
+  const slot = ev.target.closest(".slot");
+  if (!slot) return;
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = "copy";
+  slot.classList.add("over");
+});
+$("slots").addEventListener("dragleave", ev => {
+  const slot = ev.target.closest(".slot");
+  if (slot) slot.classList.remove("over");
+});
+$("slots").addEventListener("drop", ev => {
+  const slot = ev.target.closest(".slot");
+  if (!slot) return;
+  ev.preventDefault();
+  slot.classList.remove("over");
+  const key = ev.dataTransfer.getData("text/plain");
+  if (key) applyTint(Number(slot.dataset.i), tintFromKey(key));
+});
+
+// ── Output ─────────────────────────────────────────────────
+function writeOut() {
+  $("out").value =
+    "Brachydios variant tints — paste this back to Claude:\n\n" +
+    VARIANTS.map(v =>
+      `${v.id.padEnd(13)} icon: ${v.icon.padEnd(6)} filter: ${filterOf(v)}`
+    ).join("\n");
+}
+$("copyBtn").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("out").value); $("copied").textContent = "Copied."; }
+  catch (e) { $("out").select(); $("copied").textContent = "Select-all and copy manually."; }
+  setTimeout(() => { $("copied").textContent = ""; }, 2500);
+});
+$("resetBtn").addEventListener("click", () => {
+  DEFAULTS.forEach((d, i) => Object.assign(VARIANTS[i], JSON.parse(JSON.stringify(d))));
+  drawSlots();
+});
+
+for (const id of ["pSat", "pBright"]) {
+  $(id).addEventListener("input", () => {
+    $(id + "Out").textContent = Number($(id).value).toFixed(2);
+    drawMatrix();
+  });
+}
+$("hueStep").addEventListener("change", drawMatrix);
+
+drawMatrix();
+drawSlots();
+</script>
+</body>
+</html>
