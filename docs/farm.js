@@ -127,7 +127,7 @@ window.FARM = (function () {
       base: 60000, mult: 1, max: 1, ore: 16, oreQty: 15 },
     // Sells at whatever "Junk ≤" is already set to, so the hire adds no new control —
     // the dropdown you were already using becomes her instructions.
-    { id: "neko", name: "Neko", desc: "Sells junk charms for you, at your Junk ≤ setting",
+    { id: "neko", name: "Neko (Means Cat)", desc: "Sells junk charms for you, at your Junk ≤ setting",
       base: 90000, mult: 1, max: 1, ore: 18, oreQty: 12 },
     { id: "argosy", name: "Argosy Captain", desc: "Sells ore no upgrade still needs, plus any surplus",
       base: 120000, mult: 1, max: 1, ore: 20, oreQty: 12 },
