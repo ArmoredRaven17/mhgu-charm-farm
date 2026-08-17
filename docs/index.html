@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=11">
+<link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
 <div id="app">
@@ -36,10 +36,6 @@
         <button type="button" class="arena-target" id="target" aria-label="Attack">
           <img id="targetImg" src="assets/MonsterIcons/MHGU-Brachydios_Icon.webp" alt="">
         </button>
-        <div class="hpbar">
-          <div class="hpbar-fill" id="hpFill" style="width:100%"></div>
-          <div class="hpbar-text" id="hpText">0 / 0</div>
-        </div>
         <div class="arena-stats">
           <span><b>Click</b> <i id="statDmg" title="Base damage per click">1</i></span>
           <span><b>Crit</b> <i id="statCrit" title="Chance and multiplier">0%</i></span>
@@ -310,11 +306,6 @@
           <span class="set-hint">Those two take the whole box at once.</span></div>
         <button type="button" class="toggle" id="confirmBulkToggle" role="switch" aria-checked="true" aria-label="Confirm before emptying or bulk-selling"></button>
       </div>
-      <div class="set-row">
-        <div class="set-label">Floating damage numbers
-          <span class="set-hint">Turn off if the numbers get distracting at high click rates.</span></div>
-        <button type="button" class="toggle" id="dmgNumbersToggle" role="switch" aria-checked="true" aria-label="Floating damage numbers"></button>
-      </div>
     </div>
 
     <div class="set-section">
@@ -356,7 +347,7 @@
 <script src="roll.js?v=6"></script>
 <script src="farm.js?v=23"></script>
 <script src="box.js?v=10"></script>
-<script src="ui.js?v=15"></script>
-<script src="app.js?v=17"></script>
+<script src="ui.js?v=16"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

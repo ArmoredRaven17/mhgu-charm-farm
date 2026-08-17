@@ -18,7 +18,6 @@ window.UI = (function () {
   let page = 0;
   let selected = -1;        // flat box index of the inspected charm
   let sortDir = "desc";
-  let showDamage = true;
   let confirmBulk = true;
   let junkMax = 2;          // highest rarity Sell Junk will take
   let autoSort = false;     // re-apply the chosen sort after every hunt
@@ -46,20 +45,18 @@ window.UI = (function () {
     if (img.getAttribute("src") !== src) img.setAttribute("src", src);
     if (img.style.filter !== v.filter) img.style.filter = v.filter === "none" ? "" : v.filter;
 
-    const max = F.hpMax();
-    const hp = Math.max(0, s.hp);
-    $("hpFill").style.width = (max > 0 ? (hp / max) * 100 : 0) + "%";
-    $("hpText").textContent = `${Math.ceil(hp).toLocaleString()} / ${max.toLocaleString()}`;
+    // No HP readout by design — the monster's remaining health isn't shown, so the
+    // hit flashes and the drops are the feedback.
 
-    // "Click" is the BASE damage of one hit. What you see floating off the monster is
-    // usually higher — crits multiply it, and hired hunters throw their own attacks
-    // that float numbers too. Spell both out rather than leave you doing the maths.
+    // Damage is never shown on the monster, so the readout is the only place these
+    // numbers appear at all — worth spelling out rather than leaving you to work out
+    // what a crit is actually worth.
     const base = F.clickDamage(), critMult = F.critMult(), chance = F.critChance();
     const avg = base * (1 + chance * (critMult - 1));
     $("statDmg").textContent = base.toLocaleString();
     $("statDmg").title = `${base.toLocaleString()} damage per click. ` +
       `A crit deals ${Math.round(base * critMult).toLocaleString()} ` +
-      `(${Math.round(chance * 100)}% chance), averaging ${avg.toFixed(1)} per hit. ` +
+      `(${Math.round(chance * 100)}% chance — the pink flash), averaging ${avg.toFixed(1)} per hit. ` +
       `Hired hunters attack for the same.`;
     $("statCrit").textContent = Math.round(chance * 100) + "% · " + critMult.toFixed(2) + "x";
     $("statCrit").title = `${Math.round(chance * 100)}% chance to deal ${critMult.toFixed(2)}x damage.`;
@@ -70,24 +67,28 @@ window.UI = (function () {
     $("zennyPill").textContent = Math.floor(s.zenny).toLocaleString() + "z";
   }
 
-  // A damage number floating off the monster. Removed on animationend so nothing
-  // piles up under a fast clicker.
-  function floatDamage(text, crit) {
-    if (!showDamage) return;
-    const host = $("target");
-    const el = document.createElement("div");
-    el.className = "dmg" + (crit ? " crit" : "");
-    el.textContent = text;
-    el.style.left = (25 + Math.random() * 50) + "%";
-    el.style.top = (30 + Math.random() * 30) + "%";
-    el.addEventListener("animationend", () => el.remove());
-    host.appendChild(el);
-  }
-
-  function hitFlash() {
+  let flashTimer = null;
+  function flash(cls, ms) {
     const t = $("target");
-    t.classList.add("hitflash");
-    setTimeout(() => t.classList.remove("hitflash"), 60);
+    t.classList.remove("hitflash", "critflash");
+    // Force a reflow so a flash landing mid-flash restarts rather than being ignored.
+    void t.offsetWidth;
+    t.classList.add(cls);
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => t.classList.remove(cls), ms);
+  }
+  const hitFlash = () => flash("hitflash", 60);
+  const critFlash = () => flash("critflash", 150);
+
+  // One entry point for "a blow landed", so a click and a hired hunter's attack read
+  // identically.
+  //
+  // No damage numbers anywhere, deliberately: MHGU shows neither a monster health bar
+  // nor damage figures — those arrived in later games. You read a hit by what the
+  // monster does, so a hit is a flash and a crit is a pink one.
+  function showHit(res) {
+    if (!res) return;
+    if (res.crit) critFlash(); else hitFlash();
   }
 
   // ── Ore strip ────────────────────────────────────────────────────────────────
@@ -647,7 +648,6 @@ window.UI = (function () {
     setTimeout(() => cell.el.classList.remove("fresh"), 1500);
   }
 
-  const setShowDamage = v => { showDamage = !!v; };
   const setConfirmBulk = v => { confirmBulk = !!v; };
   const setHiresPaused = o => { hiresPaused = Object.assign({}, o || {}); };
   const setAutoSort = v => {
@@ -664,8 +664,9 @@ window.UI = (function () {
 
   return {
     buildGrid, renderAll, renderArena, renderGrid, renderPot, renderDetail, renderOres,
-    renderShop, renderRoster, initEvents, toast, floatDamage, hitFlash, flashFresh,
-    setShowDamage, setConfirmBulk, setJunkMax, setAutoSort, setHiresPaused, maybeAutoSort,
+    renderShop, renderRoster, initEvents, toast, hitFlash, critFlash,
+    showHit, flashFresh,
+    setConfirmBulk, setJunkMax, setAutoSort, setHiresPaused, maybeAutoSort,
     clearSelection, hideTip, esc,
     get page() { return page; },
     set page(p) { page = p; },

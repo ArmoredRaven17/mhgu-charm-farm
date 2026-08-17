@@ -148,29 +148,20 @@ kbd{
   width:82%;height:82%;object-fit:contain;pointer-events:none;
   transition:filter .2s
 }
+/* The game shows no health bar and no damage figures — a hit reads as a flash and
+   nothing else. An ordinary blow brightens the monster; a critical washes it pink,
+   which is louder without being another number to read.
+   The flash sits on the frame rather than the sprite, because the sprite's own
+   `filter` is carrying that variant's tint and a second filter would replace it. */
 .arena-target.hitflash{filter:brightness(1.9) saturate(1.4)}
-
-/* Floating damage numbers. They're absolutely positioned inside the target and
-   removed when the animation ends, so nothing accumulates. */
-.dmg{
-  position:absolute;pointer-events:none;font-size:15px;font-weight:700;
-  text-shadow:0 0 3px #000,0 0 5px #000;animation:dmgfloat .75s ease-out forwards;z-index:3
+.arena-target.critflash{
+  background:#3d0f2c;border-color:#ff5ab4;
+  box-shadow:inset 0 0 34px rgba(255,90,180,.9),0 0 20px rgba(255,90,180,.55)
 }
-.dmg.crit{font-size:21px;color:#ffd24a}
-@keyframes dmgfloat{
-  0%{opacity:1;transform:translateY(0)}
-  100%{opacity:0;transform:translateY(-46px)}
+@media (prefers-reduced-motion:reduce){
+  .arena-target{transition:none}
 }
 
-.hpbar{
-  height:16px;border:1px solid var(--line);border-radius:8px;overflow:hidden;
-  background:#00000055;margin:10px 0 4px;position:relative
-}
-.hpbar-fill{height:100%;background:linear-gradient(#63d463,#2f8f2f);transition:width .08s linear}
-.hpbar-text{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-variant-numeric:tabular-nums;text-shadow:0 0 3px #000
-}
 .arena-stats{
   display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px;opacity:.8;
   margin-top:8px;text-align:left

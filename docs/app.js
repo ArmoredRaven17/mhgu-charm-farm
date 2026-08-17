@@ -222,7 +222,6 @@
   const settings = BOX.readSettings();
   const state = {
     confirmBulk: settings.confirmBulk !== false,
-    dmgNumbers: settings.dmgNumbers !== false,
     junkMax: settings.junkMax || 2,
     autoSort: !!settings.autoSort,
     // Which hires are stood down. Kokoto Gal used to be the only one you could switch
@@ -235,7 +234,6 @@
   const hireOn = id => FARM.lvl(id) > 0 && !state.hiresPaused[id];
   function persistSettings() { BOX.writeSettings(state); }
   UI.setConfirmBulk(state.confirmBulk);
-  UI.setShowDamage(state.dmgNumbers);
   UI.setJunkMax(state.junkMax);
 
   BOX.initLocalSave();
@@ -305,11 +303,7 @@
     onTick: () => { if (!quiet) UI.renderArena(); },
     // A hired hunter's attack should look like an attack — same flash and floating
     // number a click gets, so you can see the crits they land.
-    onAutoClick: res => {
-      if (!res) return;
-      UI.hitFlash();
-      UI.floatDamage(res.crit ? `${res.dealt}!` : String(res.dealt), res.crit);
-    },
+    onAutoClick: res => { UI.showHit(res); },
     onChange: () => {
       if (quiet) return;
       UI.renderArena(); UI.renderOres(); UI.renderShop();
@@ -415,12 +409,7 @@
   });
 
   UI.initEvents({
-    attack: () => {
-      const res = FARM.click();
-      if (!res) return;
-      UI.hitFlash();
-      UI.floatDamage(res.crit ? `${res.dealt}!` : String(res.dealt), res.crit);
-    },
+    attack: () => { UI.showHit(FARM.click()); },
     confirm: askConfirm,
     settingChanged: (key, value) => { state[key] = value; persistSettings(); },
   });
@@ -494,9 +483,6 @@
   bindToggle("confirmBulkToggle", () => state.confirmBulk, v => {
     state.confirmBulk = v; UI.setConfirmBulk(v); persistSettings();
   });
-  bindToggle("dmgNumbersToggle", () => state.dmgNumbers, v => {
-    state.dmgNumbers = v; UI.setShowDamage(v); persistSettings();
-  });
 
   $("clearLocalBtn").addEventListener("click", () => {
     BOX.clearLocalSave();
@@ -535,8 +521,7 @@
     // focused monster button would register two hits per press.
     if (e.key === " " || e.code === "Space") {
       e.preventDefault();
-      const res = FARM.click();
-      if (res) { UI.hitFlash(); UI.floatDamage(res.crit ? `${res.dealt}!` : String(res.dealt), res.crit); }
+      UI.showHit(FARM.click());
     }
   });
 
