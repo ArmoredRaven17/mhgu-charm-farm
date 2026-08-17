@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
 <div id="app">
@@ -15,7 +15,7 @@
     <img class="title-icon" id="titleIcon" src="assets/MonsterIcons/MHGU-Brachydios_Icon.webp" alt="">
     <h1>MHGU Charm Farm</h1>
     <span id="zennyPill" class="progress-pill first" title="Zenny">0z</span>
-    <span id="capacityPill" class="progress-pill" title="Charms in the box">0 / 500</span>
+    <span id="capacityPill" class="progress-pill" title="Charms in the box">0 / 2000</span>
     <button id="saveBtn"   class="btn tiny">Save <span id="dirtyDot" class="dirty-dot hidden">●</span></button>
     <button id="saveAsBtn" class="btn tiny">Save As…</button>
     <button id="openBtn"   class="btn tiny">Open…</button>
@@ -60,7 +60,7 @@
     <div class="farm-col box-col">
       <div class="box-nav">
         <button id="prevPage" class="nav-btn">&lsaquo; Prev</button>
-        <span id="pageIndicator" class="page-indicator">Page 1 / 5</span>
+        <span id="pageIndicator" class="page-indicator">Page 1 / 20</span>
         <button id="nextPage" class="nav-btn">Next &rsaquo;</button>
         <span class="spacer"></span>
         <select id="sortKey" class="mini-select">
@@ -339,9 +339,9 @@
 <script src="data/skills.js?v=1"></script>
 <script src="data/ores.js?v=1"></script>
 <script src="roll.js?v=4"></script>
-<script src="farm.js?v=8"></script>
-<script src="box.js?v=7"></script>
+<script src="farm.js?v=9"></script>
+<script src="box.js?v=8"></script>
 <script src="ui.js?v=10"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

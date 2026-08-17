@@ -13,7 +13,9 @@ window.BOX = (function () {
   const LOCAL_ENABLED_KEY = "mhgu-charm-farm-local";
   const SETTINGS_KEY = "mhgu-charm-farm-settings";
 
-  const BOX_SIZE = 500;      // 5 pages of 100
+  // 2000 slots in pages of 100 — the hunter equipment box exactly as the game sizes
+  // it, and the same figure the sibling Equipment Box app uses.
+  const BOX_SIZE = 2000;
   const PAGE = 100;
   const POT_ROWS = 10;
   const POT_COLS = 3;

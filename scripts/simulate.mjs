@@ -36,7 +36,7 @@ function seedRandom(seed) {
   };
 }
 
-const BOX_CAP = 500;
+const BOX_CAP = 2000;   // matches BOX_SIZE in docs/box.js — the in-game hunter box
 const HOURS = Number(process.argv[2]) || 8;
 const SECONDS = Math.round(HOURS * 3600);
 

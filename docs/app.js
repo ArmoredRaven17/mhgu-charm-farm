@@ -57,7 +57,9 @@
 
   // Every variable is a lightness scaling of the one chosen colour, so hue and
   // saturation carry through and the ordering (bg1 < nav < bg2) holds on every theme.
+  let currentTheme = DEFAULT_THEME;
   function applyTheme(hex) {
+    currentTheme = hex;
     const c = hexRgb(hex), r = document.documentElement.style;
     r.setProperty("--bg", cssRgb(darken(c, .70)));
     r.setProperty("--bg1", cssRgb(darken(c, .80)));
@@ -84,19 +86,32 @@
       titleIcon.title = v.name;
     }
   }
+  // A variant's theme is earned by hunting it. Until then the tile is a placeholder —
+  // the Forbidden colour and a question mark — so the roster reads as something to
+  // fill in rather than a list of colours you already have.
+  const LOCKED_HEX = "#1E2025";
+  const LOCKED_ICON = "assets/MonsterIcons/MHGU-Question_Mark_Icon.webp";
+
   function buildSwatches() {
     const wrap = $("swatches");
     wrap.innerHTML = "";
     for (const v of THEME_VARIANTS) {
+      const seen = FARM.hasSeen(v.id);
       const d = document.createElement("div");
-      d.className = "swatch";
-      d.dataset.hex = v.theme;
-      d.style.background = v.theme;
-      d.title = v.name;
-      const filter = v.filter === "none" ? "" : `filter:${v.filter}`;
-      d.innerHTML = `<img class="swatch-icon" src="${SPRITES[v.icon]}" alt="" style="${filter}">` +
-        `<span>${UI.esc(shortName(v))}</span>`;
-      d.addEventListener("click", () => applyTheme(v.theme));
+      d.className = "swatch" + (seen ? "" : " locked");
+      d.dataset.hex = seen ? v.theme : "";
+      d.style.background = seen ? v.theme : LOCKED_HEX;
+      if (seen) {
+        d.title = v.name;
+        const filter = v.filter === "none" ? "" : `filter:${v.filter}`;
+        d.innerHTML = `<img class="swatch-icon" src="${SPRITES[v.icon]}" alt="" style="${filter}">` +
+          `<span>${UI.esc(shortName(v))}</span>`;
+        d.addEventListener("click", () => applyTheme(v.theme));
+      } else {
+        // No name and no tint — knowing which coat is missing is half the hunt.
+        d.title = "Hunt this Brachydios to unlock its theme";
+        d.innerHTML = `<img class="swatch-icon" src="${LOCKED_ICON}" alt=""><span>Locked</span>`;
+      }
       wrap.appendChild(d);
     }
   }
@@ -167,6 +182,8 @@
     BOX.load(obj);
     UI.page = 0;
     UI.clearSelection();
+    buildSwatches();          // a different save has met a different set of coats
+    restoreTheme();
     UI.renderAll();
     toast("Farm loaded.");
   }
@@ -189,14 +206,18 @@
   }
 
   // ── Boot ───────────────────────────────────────────────────────────────
-  buildSwatches();
-  applyTheme((() => {
+  // Which swatches are unlocked depends on FARM's `seen` list, so the picker can only
+  // be built once the run state exists — that happens further down, after the save is
+  // restored. Only the colours go on now, so the page isn't grey while it loads.
+  function restoreTheme() {
     let saved = null;
     try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
-    // A hex from the old monster palette won't match any Brachydios, and would leave
-    // the picker with nothing selected — fall back rather than show a phantom theme.
-    return saved && BY_HEX[saved.toUpperCase()] ? saved : DEFAULT_THEME;
-  })());
+    // A hex from the old monster palette won't match any Brachydios, and a theme for
+    // a variant you haven't hunted shouldn't survive a Reset Run — fall back rather
+    // than show a theme whose own tile is locked.
+    const v = saved && BY_HEX[saved.toUpperCase()];
+    applyTheme(v && FARM.hasSeen(v.id) ? saved : DEFAULT_THEME);
+  }
 
   const settings = BOX.readSettings();
   const state = {
@@ -286,6 +307,13 @@
           FARM.buy(pick.u.id);
         }
       }
+      // First of its kind: its theme is now yours, so rebuild the picker.
+      if (res.firstOfItsKind && res.variant.theme) {
+        buildSwatches();
+        applyTheme(currentTheme);        // reapplies the `sel` marker to the new tiles
+        toast(`${res.variant.name} hunted — its theme is unlocked.`, 4000);
+      }
+
       // A god charm outranks every other thing the hunt could tell you about.
       const god = res.charms.find(ROLL.isGod) || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
       if (god) {
@@ -343,6 +371,10 @@
     }
   }
 
+  // Now that the run state is loaded, the picker knows which coats you've met.
+  buildSwatches();
+  restoreTheme();
+
   // Booting isn't a change the user made, and FARM.init's first onChange marks the
   // save stale on the way in — so clear it once everything is up.
   BOX.dirty = false;
@@ -397,6 +429,8 @@
       FARM.reset();
       UI.page = 0;
       UI.clearSelection();
+      buildSwatches();          // every coat but the base is a stranger again
+      applyTheme(DEFAULT_THEME);
       UI.renderAll();
       $("settingsModal").classList.add("hidden");
       toast("Run reset.");

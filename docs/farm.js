@@ -180,8 +180,13 @@ window.FARM = (function () {
   let autoCarry = 0;      // fractional auto-attacks owed between ticks
 
   function fresh() {
-    return { zenny: 0, kills: 0, hp: 0, variant: "base", upgrades: {}, ores: {} };
+    // `seen` is the trophy list — which variants you've actually hunted. It gates the
+    // theme picker, so it has to persist with the run. The base Brachydios starts
+    // unlocked: he's the one already standing in front of you, and a picker showing
+    // fourteen locked tiles on a fresh save reads as broken rather than as progression.
+    return { zenny: 0, kills: 0, hp: 0, variant: "base", upgrades: {}, ores: {}, seen: { base: true } };
   }
+  const hasSeen = id => !!(state && state.seen && state.seen[id]);
 
   function rankIndex() {
     let r = 0;
@@ -260,6 +265,8 @@ window.FARM = (function () {
     // to the HP you just chewed through keeps money meaningful and makes a Raging
     // Brachydios genuinely worth finding.
     const worth = hpMax();
+    const firstOfItsKind = !state.seen[v.id];
+    state.seen[v.id] = true;
     state.kills++;
     const pay = Math.round(worth * 0.55 * zennyMult());
     state.zenny += pay;
@@ -270,7 +277,7 @@ window.FARM = (function () {
     const charms = rollDrops(v);
     const killed = v;
     spawn();
-    onKill({ variant: killed, zenny: pay, ores, charms });
+    onKill({ variant: killed, zenny: pay, ores, charms, firstOfItsKind });
     onChange();
   }
 
@@ -380,6 +387,8 @@ window.FARM = (function () {
     state = Object.assign(fresh(), saved || {});
     state.upgrades = Object.assign({}, (saved && saved.upgrades) || {});
     state.ores = Object.assign({}, (saved && saved.ores) || {});
+    // Base always unlocked, including in saves written before `seen` existed.
+    state.seen = Object.assign({ base: true }, (saved && saved.seen) || {});
     if (!variantById[state.variant]) state.variant = "base";
     if (!state.hp || state.hp <= 0 || state.hp > hpMax()) spawn();
     // Only replace the hooks when we're actually given some. Loading a save calls
@@ -402,7 +411,7 @@ window.FARM = (function () {
     init, reset, click, hit, buy, canBuy, sellOre, oresStillNeeded, spawn,
     zennyCost, oreCost,
     get state() { return state; },
-    rankIndex, rankName, variant, hpMax,
+    rankIndex, rankName, variant, hpMax, hasSeen,
     clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, lvl,
   };
 })();
