@@ -148,18 +148,32 @@ kbd{
   width:82%;height:82%;object-fit:contain;pointer-events:none;
   transition:filter .2s
 }
-/* The game shows no health bar and no damage figures — a hit reads as a flash and
-   nothing else. An ordinary blow brightens the monster; a critical washes it pink,
-   which is louder without being another number to read.
-   The flash sits on the frame rather than the sprite, because the sprite's own
-   `filter` is carrying that variant's tint and a second filter would replace it. */
-.arena-target.hitflash{filter:brightness(1.9) saturate(1.4)}
-.arena-target.critflash{
-  background:#3d0f2c;border-color:#ff5ab4;
-  box-shadow:inset 0 0 34px rgba(255,90,180,.9),0 0 20px rgba(255,90,180,.55)
+/* The game shows no health bar and no damage figures, so a blow reads as a mark where
+   it landed and nothing else — pale yellow for an ordinary hit, pink for a critical.
+   Drawn over the sprite rather than filtering it: the sprite's own `filter` carries
+   that variant's tint, and a second filter would replace it rather than compose. */
+.slash{
+  position:absolute;pointer-events:none;z-index:4;
+  width:58%;height:4px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,#fff3b0 20%,#fffbe6 50%,#fff3b0 80%,transparent);
+  box-shadow:0 0 8px rgba(255,240,160,.8);
+  animation:slashcut .26s ease-out forwards
 }
+.slash.crit{
+  height:6px;
+  background:linear-gradient(90deg,transparent,#ff5ab4 18%,#ffd9ec 50%,#ff5ab4 82%,transparent);
+  box-shadow:0 0 12px rgba(255,90,180,.95);
+  animation-duration:.34s
+}
+@keyframes slashcut{
+  0%  {opacity:0;transform:translate(-50%,-50%) rotate(var(--a,0deg)) scaleX(.2)}
+  30% {opacity:1;transform:translate(-50%,-50%) rotate(var(--a,0deg)) scaleX(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a,0deg)) scaleX(1.12)}
+}
+/* Still show where the blow landed, just without the sweep. */
 @media (prefers-reduced-motion:reduce){
-  .arena-target{transition:none}
+  .slash{animation:slashfade .26s ease-out forwards}
+  @keyframes slashfade{0%{opacity:1}100%{opacity:0}}
 }
 
 .arena-stats{

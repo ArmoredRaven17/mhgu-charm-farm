@@ -45,10 +45,7 @@ window.UI = (function () {
     if (img.getAttribute("src") !== src) img.setAttribute("src", src);
     if (img.style.filter !== v.filter) img.style.filter = v.filter === "none" ? "" : v.filter;
 
-    // No HP readout by design — the monster's remaining health isn't shown, so the
-    // hit flashes and the drops are the feedback.
-
-    // Damage is never shown on the monster, so the readout is the only place these
+    // Damage is never shown on the monster, so this readout is the only place these
     // numbers appear at all — worth spelling out rather than leaving you to work out
     // what a crit is actually worth.
     const base = F.clickDamage(), critMult = F.critMult(), chance = F.critChance();
@@ -56,7 +53,7 @@ window.UI = (function () {
     $("statDmg").textContent = base.toLocaleString();
     $("statDmg").title = `${base.toLocaleString()} damage per click. ` +
       `A crit deals ${Math.round(base * critMult).toLocaleString()} ` +
-      `(${Math.round(chance * 100)}% chance — the pink flash), averaging ${avg.toFixed(1)} per hit. ` +
+      `(${Math.round(chance * 100)}% chance — the pink slash), averaging ${avg.toFixed(1)} per hit. ` +
       `Hired hunters attack for the same.`;
     $("statCrit").textContent = Math.round(chance * 100) + "% · " + critMult.toFixed(2) + "x";
     $("statCrit").title = `${Math.round(chance * 100)}% chance to deal ${critMult.toFixed(2)}x damage.`;
@@ -67,29 +64,31 @@ window.UI = (function () {
     $("zennyPill").textContent = Math.floor(s.zenny).toLocaleString() + "z";
   }
 
-  let flashTimer = null;
-  function flash(cls, ms) {
-    const t = $("target");
-    t.classList.remove("hitflash", "critflash");
-    // Force a reflow so a flash landing mid-flash restarts rather than being ignored.
-    void t.offsetWidth;
-    t.classList.add(cls);
-    clearTimeout(flashTimer);
-    flashTimer = setTimeout(() => t.classList.remove(cls), ms);
+  // A blow leaves a slash where it landed — a mark on the monster, not a recolour of
+  // the whole beast. Pale yellow for an ordinary hit, pink for a critical. Position
+  // and angle vary per hit so a fast run doesn't look like one repeating stamp, and
+  // each mark removes itself on animationend so nothing accumulates however quickly
+  // the hits come.
+  function slash(crit) {
+    const el = document.createElement("div");
+    el.className = "slash" + (crit ? " crit" : "");
+    el.style.left = (26 + Math.random() * 48) + "%";
+    el.style.top = (26 + Math.random() * 48) + "%";
+    el.style.setProperty("--a", Math.round(Math.random() * 120 - 60) + "deg");
+    el.addEventListener("animationend", () => el.remove());
+    $("target").appendChild(el);
   }
-  const hitFlash = () => flash("hitflash", 60);
-  const critFlash = () => flash("critflash", 150);
 
   // One entry point for "a blow landed", so a click and a hired hunter's attack read
   // identically.
   //
-  // No damage numbers anywhere, deliberately: MHGU shows neither a monster health bar
-  // nor damage figures — those arrived in later games. You read a hit by what the
-  // monster does, so a hit is a flash and a crit is a pink one.
+  // No damage numbers and no health bar, deliberately: MHGU shows neither — those
+  // arrived in later games. The slash is the whole of the feedback.
   function showHit(res) {
     if (!res) return;
-    if (res.crit) critFlash(); else hitFlash();
+    slash(res.crit);
   }
+  const hitFlash = () => slash(false);      // kept for anything still calling it
 
   // ── Ore strip ────────────────────────────────────────────────────────────────
   function renderOres() {
@@ -664,7 +663,7 @@ window.UI = (function () {
 
   return {
     buildGrid, renderAll, renderArena, renderGrid, renderPot, renderDetail, renderOres,
-    renderShop, renderRoster, initEvents, toast, hitFlash, critFlash,
+    renderShop, renderRoster, initEvents, toast, hitFlash, slash,
     showHit, flashFresh,
     setConfirmBulk, setJunkMax, setAutoSort, setHiresPaused, maybeAutoSort,
     clearSelection, hideTip, esc,
