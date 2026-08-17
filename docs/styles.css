@@ -441,6 +441,11 @@ kbd{
   position:fixed;inset:0;background:#000000a8;display:flex;align-items:center;
   justify-content:center;z-index:20;padding:20px
 }
+/* The confirm is always raised *by* another dialog — Reset Run and Clear browser save
+   both come from Settings — and it's first in the markup, so at a shared z-index the
+   dialog that opened it paints over the top. It's the only modal that stacks, so it's
+   the only one that needs a layer of its own. */
+#confirmModal{z-index:25}
 .modal-card{
   position:relative;border:1px solid var(--line);border-radius:12px;padding:22px;
   width:min(460px,92vw);max-height:88vh;overflow-y:auto;
