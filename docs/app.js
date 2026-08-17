@@ -198,12 +198,41 @@
     return sync;
   }
 
-  function bindModal(btnId, modalId, closeId) {
-    $(btnId).addEventListener("click", () => $(modalId).classList.remove("hidden"));
+  function bindModal(btnId, modalId, closeId, onOpen) {
+    $(btnId).addEventListener("click", () => {
+      if (onOpen) onOpen();
+      $(modalId).classList.remove("hidden");
+    });
     $(closeId).addEventListener("click", () => $(modalId).classList.add("hidden"));
     $(modalId).addEventListener("click", e => {
       if (e.target.id === modalId) $(modalId).classList.add("hidden");
     });
+  }
+
+  // ── Melding costs ──────────────────────────────────────────────────────
+  // Every figure comes from ROLL, never from a written-down copy: the fee shown is the
+  // fee charged, however the formula is tuned later. Rebuilt on open so the affordable
+  // rungs reflect the zenny you have this second.
+  function buildCostTable() {
+    const rows = [];
+    for (let r = 1; r <= 10; r++) {
+      const fee = ROLL.meldFee(r);
+      const out = ROLL.meldOutputRarity(r);
+      const can = FARM.state.zenny >= fee;
+      // The top rung returns its own rarity — worth saying why that's still a trade.
+      const gives = out === r
+        ? `another ${UI.esc(ROLL.charmName(out))} <span class="cost-note">— a fresh roll</span>`
+        : `a ${UI.esc(ROLL.charmName(out))}`;
+      rows.push(`<div class="cost-row">
+        <img src="assets/icons/icon_talisman_r${r}.png" alt="">
+        <span class="cost-name">${UI.esc(ROLL.charmName(r))}</span>
+        <span class="cost-fee ${can ? "afford" : "short"}">${fee.toLocaleString()}z</span>
+        <span class="cost-out">${gives}</span>
+      </div>`);
+    }
+    $("costTable").innerHTML =
+      `<div class="cost-row cost-head"><span></span><span>Feed in three</span>
+        <span>Fee</span><span>Get back</span></div>` + rows.join("");
   }
 
   // ── Boot ───────────────────────────────────────────────────────────────
@@ -517,6 +546,7 @@
   bindModal("linksBtn", "linksModal", "linksClose");
   bindModal("settingsBtn", "settingsModal", "settingsClose");
   bindModal("helpBtn", "helpModal", "helpClose");
+  bindModal("costBtn", "costModal", "costClose", buildCostTable);
 
   bindToggle("localSaveToggle", () => BOX.localSaveEnabled, v => {
     BOX.setLocalSave(v);

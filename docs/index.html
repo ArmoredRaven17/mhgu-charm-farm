@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=24">
+<link rel="stylesheet" href="styles.css?v=25">
 </head>
 <body>
 <div id="app">
@@ -125,6 +125,7 @@
       <div class="pot-actions">
         <button id="autoFillBtn" class="nav-btn" title="Load rows from whatever you have three of">Auto-fill</button>
         <button id="emptyPotBtn" class="nav-btn" title="Send every charm in the pot back to the box">Empty Pot</button>
+        <button id="costBtn" class="nav-btn" title="What each meld costs">Costs</button>
       </div>
       <div class="pot-status" id="potStatus"></div>
       <div class="pot" id="pot"></div>
@@ -141,6 +142,21 @@
     <div class="row end gap">
       <button id="confirmOk" class="btn">OK</button>
       <button id="confirmCancel" class="btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Melding costs -->
+<div id="costModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Melding Costs</h2>
+    <p class="muted">The fee is set by what you feed in, not by what comes back. Zenny only —
+      the pot never asks for ore. A row you can't pay for says so instead of taking the charms.</p>
+    <!-- Built from ROLL.meldFee every time the dialog opens, so it can't drift from the
+         number actually charged, and so what you can afford is current. -->
+    <div class="cost-table" id="costTable"></div>
+    <div class="row end gap">
+      <button id="costClose" class="btn">Close</button>
     </div>
   </div>
 </div>
@@ -365,6 +381,6 @@
 <script src="farm.js?v=23"></script>
 <script src="box.js?v=10"></script>
 <script src="ui.js?v=27"></script>
-<script src="app.js?v=23"></script>
+<script src="app.js?v=24"></script>
 </body>
 </html>

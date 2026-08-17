@@ -522,6 +522,25 @@ kbd{
 .roster-item img{width:46px;height:46px;object-fit:contain;display:block;margin:0 auto 3px}
 .roster-rank{font-size:10px;opacity:.55}
 
+/* The melding fee ladder. One grid for the whole table so the icon, name, fee and
+   result each keep their own column and the fees line up as a readable curve. */
+.cost-table{
+  display:grid;grid-template-columns:auto auto max-content 1fr;
+  gap:5px 10px;align-items:center;font-size:12.5px;margin-bottom:16px
+}
+.cost-row{display:contents}
+.cost-row img{width:22px;height:22px;object-fit:contain}
+.cost-name{white-space:nowrap;opacity:.9}
+.cost-fee{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.cost-out{opacity:.75;line-height:1.35}
+.cost-note{opacity:.6;font-size:11.5px}
+/* Same green/red the smithy uses for "can you pay for this". */
+.cost-fee.afford{color:var(--positive)}
+.cost-fee.short{color:var(--negative)}
+/* The row itself draws no box (display:contents), so opacity has to go on the cells. */
+.cost-head{font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.cost-head span{white-space:nowrap;opacity:.55}
+
 /* ── Charm hover card ────────────────────────────────────────────────── */
 /* pointer-events:none matters: the card is placed next to the cell you're on, and
    a card that could take the pointer would flicker the moment it overlapped it. */
