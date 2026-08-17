@@ -179,12 +179,22 @@ window.BOX = (function () {
     return { index: i, charm: out };
   }
 
-  function meldAll() {
-    const results = [];
-    for (let r = 0; r < POT_ROWS; r++) {
-      if (!rowProblem(r)) { const m = meldRow(r); if (m) results.push(m); }
-    }
-    return results;
+  // Rows waiting their turn, in the order they'll resolve. The pot is a queue: the
+  // game resolves one meld per hunt, not one per button press.
+  function queuedRows() {
+    const out = [];
+    for (let r = 0; r < POT_ROWS; r++) if (!rowProblem(r)) out.push(r);
+    return out;
+  }
+
+  // Called when a Brachydios dies. Resolves the topmost ready row and nothing else —
+  // one meld per hunt is the whole rule.
+  function resolveOneMeld() {
+    const queue = queuedRows();
+    if (!queue.length) return null;
+    const r = queue[0];
+    const m = meldRow(r);
+    return m ? Object.assign({ row: r }, m) : null;
   }
 
   // Fill the pot greedily from the box: whichever rarities have three or more spare
@@ -300,7 +310,8 @@ window.BOX = (function () {
     on, touched, markDirty, emit,
     get, add, removeAt, setAt, sellAt, sellWhere, sortBox, emptyBox,
     count, isFull, pages, firstEmpty,
-    potGet, potLoad, potUnload, rowReady, rowProblem, meldRow, meldAll, autoFill, emptyPot,
+    potGet, potLoad, potUnload, rowReady, rowProblem, meldRow, queuedRows, resolveOneMeld,
+    autoFill, emptyPot,
     payload, validateSave, load,
     storedSave, flushAutosave, clearLocalSave, setLocalSave, initLocalSave,
     readSettings, writeSettings,

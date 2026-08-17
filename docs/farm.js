@@ -111,9 +111,13 @@ window.FARM = (function () {
 
   // Which ore a given upgrade level demands, and how many. Levels walk up the ladder
   // so the shop keeps pointing you at whatever you haven't farmed yet.
+  // The ore demanded walks up the ladder every three levels, and the quantity climbs
+  // every second level. The quantity curve used to be level/4, which meant the first
+  // four levels of anything cost a single ore each — you could buy a row of Palicoes
+  // off one hunt's drops. This is the knob to turn if ore feels too tight or too free.
   function oreCost(up, level) {
     const idx = Math.min(ORE_LADDER.length - 1, Math.floor(level / 3) + Math.floor(up.ore / 2));
-    return { ore: ORE_LADDER[idx], qty: 1 + Math.floor(level / 4) };
+    return { ore: ORE_LADDER[idx], qty: 1 + Math.floor(level / 2) };
   }
   function zennyCost(up, level) {
     return Math.round(up.base * Math.pow(up.mult, level));
@@ -124,6 +128,13 @@ window.FARM = (function () {
   const HP_GROWTH = 1.055;   // per kill, before the variant multiplier
 
   let state = null;
+  // Two separate signals on purpose. `onTick` fires for a bare HP change — many times
+  // a second once Palicoes are hired — and must stay cheap. `onChange` fires only when
+  // the economy actually moves (kill, purchase, sale) and is free to rebuild panels.
+  // Collapsing them meant the shop's innerHTML was rewritten ten times a second, which
+  // swapped the button out from under a click and made purchases look like they hadn't
+  // registered.
+  let onTick = () => {};
   let onChange = () => {};
   let onKill = () => {};
   let timer = null;
@@ -222,8 +233,8 @@ window.FARM = (function () {
     const dealt = exact ? amount : Math.max(1, Math.round(amount));
     if (dealt <= 0) return null;
     state.hp -= dealt;
-    if (state.hp <= 0) kill();
-    else onChange();
+    if (state.hp <= 0) kill();      // kill() raises the heavier onChange itself
+    else onTick();
     return { dealt: Math.round(dealt), crit: !!isCrit };
   }
 
@@ -297,13 +308,14 @@ window.FARM = (function () {
     // init again to swap the run state in, and passing null there must not silently
     // unhook the app — that would leave kills dropping charms into nothing.
     if (hooks) {
+      onTick = hooks.onTick || (() => {});
       onChange = hooks.onChange || (() => {});
       onKill = hooks.onKill || (() => {});
     }
     startTick();
     onChange();
   }
-  function reset() { init(null, { onChange, onKill }); }
+  function reset() { init(null, { onTick, onChange, onKill }); }
 
   return {
     VARIANTS, RANKS, UPGRADES, ORES, oreById, variantById, ORE_LADDER,

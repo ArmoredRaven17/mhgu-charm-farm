@@ -198,10 +198,12 @@
   const state = {
     confirmBulk: settings.confirmBulk !== false,
     dmgNumbers: settings.dmgNumbers !== false,
+    junkMax: settings.junkMax || 2,
   };
   function persistSettings() { BOX.writeSettings(state); }
   UI.setConfirmBulk(state.confirmBulk);
   UI.setShowDamage(state.dmgNumbers);
+  UI.setJunkMax(state.junkMax);
 
   BOX.initLocalSave();
   UI.buildGrid();
@@ -209,22 +211,41 @@
 
   // The two models both repaint through here. FARM owns the clicker, BOX owns the
   // charms; each tells the UI when something moved rather than the UI polling.
+  function markRunDirty() {
+    // Zenny, ore and upgrades live in FARM, so a purchase or a kill has to mark the
+    // save stale too — otherwise only charm movements would ever persist and a
+    // shopping trip would vanish on reload.
+    BOX.markDirty();
+    $("dirtyDot").classList.remove("hidden");
+    if (!document.title.startsWith("●")) document.title = "● MHGU Charm Farm";
+  }
+
   FARM.init(null, {
+    // Bare HP change: repaint the arena and nothing else. This runs on every click
+    // and ten times a second while Palicoes are working, so it must not touch the
+    // shop or the ore strip — rebuilding those here is what made purchases misfire.
+    onTick: () => { UI.renderArena(); },
     onChange: () => {
       UI.renderArena(); UI.renderOres(); UI.renderShop();
-      // Zenny, ore and upgrades live in FARM, so a purchase or an idle tick has to
-      // mark the save stale too — otherwise only charm movements would ever persist
-      // and a shopping trip would vanish on reload.
-      BOX.markDirty();
-      $("dirtyDot").classList.remove("hidden");
-      if (!document.title.startsWith("●")) document.title = "● MHGU Charm Farm";
+      markRunDirty();
     },
     onKill: res => {
+      // The pot resolves first: it frees three slots and returns one, so a nearly
+      // full box is likelier to have room for the hunt's drops afterwards.
+      const meld = BOX.resolveOneMeld();
       const placed = BOX.add(res.charms);
-      if (placed < res.charms.length) {
-        toast(`Box full — ${res.charms.length - placed} charm${res.charms.length - placed === 1 ? "" : "s"} lost. Sell or meld something.`, 3600);
+      // A god charm outranks every other thing the hunt could tell you about.
+      const god = res.charms.find(ROLL.isGod) || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
+      if (god) {
+        toast(`God charm! A ${ROLL.charmName(god.r)} with three slots and both skills maxed.`, 6000);
+      } else if (placed < res.charms.length) {
+        const lost = res.charms.length - placed;
+        toast(`Box full — ${lost} charm${lost === 1 ? "" : "s"} lost. Sell or meld something.`, 3600);
+      } else if (meld) {
+        toast(`The pot returned a ${ROLL.charmName(meld.charm.r)}.`);
       }
       UI.renderAll();
+      if (meld) UI.flashFresh(meld.index);
     },
   });
   BOX.on(() => {
@@ -243,7 +264,11 @@
       UI.floatDamage(res.crit ? `${res.dealt}!` : String(res.dealt), res.crit);
     },
     confirm: askConfirm,
+    settingChanged: (key, value) => { state[key] = value; persistSettings(); },
   });
+
+  // The select lives in the toolbar, so set it after initEvents has bound it.
+  UI.setJunkMax(state.junkMax);
 
   // Restore. With browser-save on it loads silently; with it off, the banner offers
   // the choice rather than throwing away last session's work without asking.

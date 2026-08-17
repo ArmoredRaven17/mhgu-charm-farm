@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
 <div id="app">
@@ -72,7 +72,20 @@
         </select>
         <button id="sortDir" class="nav-btn" title="Toggle sort direction">Desc ↓</button>
         <button id="applySort" class="nav-btn" disabled>Apply Sort</button>
-        <button id="sellJunkBtn" class="nav-btn" title="Sell every charm at rarity 1–2">Sell Junk</button>
+        <label for="junkRarity" class="nav-label">Junk ≤</label>
+        <select id="junkRarity" class="mini-select" title="Highest rarity Sell Junk will take">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+        <button id="sellJunkBtn" class="nav-btn" title="Sell every charm up to that rarity. God charms are never sold.">Sell Junk</button>
         <button id="emptyBoxBtn" class="nav-btn">Empty Box</button>
       </div>
       <div class="box-grid-area">
@@ -88,7 +101,6 @@
            reach for most. -->
       <div class="pot-actions">
         <button id="autoFillBtn" class="nav-btn" title="Load rows from whatever you have three of">Auto-fill</button>
-        <button id="meldAllBtn" class="nav-btn" title="Meld every row that's ready">Meld All</button>
         <button id="emptyPotBtn" class="nav-btn" title="Send every charm in the pot back to the box">Empty Pot</button>
       </div>
       <div class="pot-status" id="potStatus"></div>
@@ -175,6 +187,9 @@
       <dt><kbd>Space</kbd></dt><dd>Same as clicking — hold it down</dd>
       <dt>Smithy</dt><dd>Spend zenny <em>and</em> ore on upgrades. Ore comes from the variant wearing that ore's colours</dd>
       <dt>Ore chip</dt><dd>Click to sell that ore at the game's real price</dd>
+      <dt>God charm</dt><dd>Three slots with <b>both</b> skills at the top of their range. It
+        glows gold in the box, and Sell Junk will never take one</dd>
+      <dt>Junk ≤</dt><dd>Sets the highest rarity Sell Junk will clear out</dd>
     </dl>
 
     <div class="set-title">The box and the pot</div>
@@ -182,7 +197,9 @@
       <dt>Click a charm</dt><dd>Inspect it</dd>
       <dt>Drag to the pot</dt><dd>Load a charm into a melding slot</dd>
       <dt>Click a pot slot</dt><dd>Send that charm back to the box</dd>
-      <dt>Meld</dt><dd>Three charms of the <b>same rarity</b> become one new charm of that rarity</dd>
+      <dt>Melding</dt><dd>Three charms of the <b>same rarity</b> become one new charm of that
+        rarity. As in the game, <b>one meld resolves per hunt</b> — load the pot, then go
+        killing. Rows resolve top-down, and each shows how many hunts away it is</dd>
       <dt>Auto-fill</dt><dd>Loads rows from whatever you have three-of, best rarity first</dd>
       <dt><kbd>Ctrl</kbd> + <kbd>S</kbd></dt><dd>Save to a file</dd>
       <dt><kbd>Esc</kbd></dt><dd>Close a dialog</dd>
@@ -294,15 +311,19 @@
   <button id="restoreNo" class="btn tiny">Dismiss</button>
 </div>
 
+<!-- Hover card for a charm in the box or the pot. One node, moved and refilled —
+     giving 100 cells their own tooltip element would be 100 nodes doing nothing. -->
+<div id="charmTip" class="charm-tip hidden" role="tooltip" aria-hidden="true"></div>
+
 <div id="toast" class="toast hidden"></div>
 
 <script src="data/charm.js?v=1"></script>
 <script src="data/skills.js?v=1"></script>
 <script src="data/ores.js?v=1"></script>
-<script src="roll.js?v=1"></script>
-<script src="farm.js?v=3"></script>
-<script src="box.js?v=2"></script>
-<script src="ui.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="roll.js?v=2"></script>
+<script src="farm.js?v=5"></script>
+<script src="box.js?v=3"></script>
+<script src="ui.js?v=4"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

@@ -78,6 +78,36 @@ for (const o of ores) {
 }
 check(ores.filter(o => o.rank === 2).every(o => o.rarity >= 8), "every G ore should be rarity 8+");
 
+// ── God charms ───────────────────────────────────────────────────────────────
+// Three slots plus both skills at the ceiling of their range for that tier.
+{
+  const tiers = win.CF_CHARM.tiers;
+  // Build one by hand from the enduring table rather than waiting for the RNG.
+  const ids = Object.keys(tiers.enduring).map(Number);
+  const first = ids.find(id => tiers.enduring[id][1] > 0);
+  const second = ids.find(id => id !== first && tiers.enduring[id][3] > 0);
+  const god = { r: 10, s: 3, k: [[first, tiers.enduring[first][1]], [second, tiers.enduring[second][3]]] };
+  check(ROLL.verify(god).length === 0, `hand-built god charm should be legal: ${ROLL.verify(god)}`);
+  check(ROLL.isGod(god), "a 3-slot charm with both skills maxed must read as a god charm");
+  check(!ROLL.isGod({ ...god, s: 2 }), "two slots is not a god charm");
+  check(!ROLL.isGod({ ...god, k: [god.k[0]] }), "one skill is not a god charm");
+  check(!ROLL.isGod({ ...god, k: [[first, tiers.enduring[first][1] - 1], god.k[1]] }),
+    "a skill one point below its ceiling is not a god charm");
+  // Mystery can't reach three slots, so it can never produce one.
+  check(!ROLL.isGod({ r: 1, s: 3, k: god.k }), "a mystery-tier charm can't be a god charm");
+}
+
+// No charm should ever carry a zero-point skill — that's the same charm with one
+// skill, and it would render as "Insight 0".
+{
+  let zeros = 0;
+  for (let i = 0; i < 20000; i++) {
+    const c = ROLL.rollCharm(1 + Math.floor(Math.random() * 10));
+    if (c && (c.k || []).some(s => s[1] === 0)) zeros++;
+  }
+  check(zeros === 0, `${zeros} rolled charms carried a zero-point skill`);
+}
+
 // ── Variant roster ───────────────────────────────────────────────────────────
 const oreIds = new Set(ores.map(o => o.id));
 const oreRank = Object.fromEntries(ores.map(o => [o.id, o.rank]));

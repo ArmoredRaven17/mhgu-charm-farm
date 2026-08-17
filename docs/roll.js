@@ -87,7 +87,12 @@ window.ROLL = (function () {
       const second = legalTrees(tier, 2).filter(e => e[0] !== t1);
       if (second.length) {
         const [t2, r2] = second[ri(second.length)];
-        k.push([t2, between(r2[0], r2[1])]);
+        const pts = between(r2[0], r2[1]);
+        // Most second-skill ranges straddle zero, so a roll of exactly 0 is common.
+        // A charm with a 0-point skill is the same charm as one with no second skill
+        // at all — the game would just show one skill — so drop it rather than print
+        // "Insight 0". Still legal: verify() only requires a first skill.
+        if (pts !== 0) k.push([t2, pts]);
       }
     }
 
@@ -128,6 +133,21 @@ window.ROLL = (function () {
     return problems;
   }
 
+  // A god charm: three slots and both skills rolled at the very top of their range
+  // for that tier. Three slots already forces timeworn or better, so this is as good
+  // as the tables allow a charm to be — the thing you farm for and never see.
+  function isGod(c) {
+    if (!c || c.s !== 3) return false;
+    const k = c.k || [];
+    if (k.length !== 2) return false;
+    const table = CHARM.tiers[tierOf(c.r)];
+    if (!table) return false;
+    const r1 = table[k[0][0]], r2 = table[k[1][0]];
+    if (!r1 || !r2) return false;
+    // Slot 1's ceiling is row[1]; slot 2's is row[3].
+    return k[0][1] === r1[1] && k[1][1] === r2[3];
+  }
+
   // ── Presentation and worth ───────────────────────────────────────────────────
   const treeName = id => (SKILLS.trees && SKILLS.trees[id]) || `tree ${id}`;
   const charmName = rarity => (CHARM.names && CHARM.names[rarity]) || `Talisman ${rarity}`;
@@ -154,7 +174,7 @@ window.ROLL = (function () {
 
   return {
     TAL_TIER, TIER_ORDER, SLOT_TIER_FLOOR, TIER_RARITIES,
-    tierOf, tierIndex, rollCharm, rollRarity, rollSlots, legalTrees, verify,
+    tierOf, tierIndex, rollCharm, rollRarity, rollSlots, legalTrees, verify, isGod,
     treeName, charmName, charmValue, legalMeld, meld, meldFee, pickWeighted,
   };
 })();

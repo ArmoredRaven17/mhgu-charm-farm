@@ -20,6 +20,7 @@ window.UI = (function () {
   let sortDir = "desc";
   let showDamage = true;
   let confirmBulk = true;
+  let junkMax = 2;          // highest rarity Sell Junk will take
   let toastTimer = null;
   let cells = [];           // the 100 cell divs, built once and repainted in place
 
@@ -154,6 +155,7 @@ window.UI = (function () {
     // Preserve transient classes the pointer/animation own, rebuild the rest.
     const fresh = el.classList.contains("fresh");
     el.className = "box-cell" + (charm ? ` filled rarity-${charm.r}` : " empty") +
+      (charm && window.ROLL.isGod(charm) ? " god" : "") +
       (flat === selected ? " selected" : "") + (fresh ? " fresh" : "");
     if (charm) {
       el.draggable = true;
@@ -165,13 +167,17 @@ window.UI = (function () {
         c.slots.innerHTML = "<span></span>".repeat(charm.s);
         c.slots.classList.remove("hidden");
       } else c.slots.classList.add("hidden");
-      el.title = `${window.ROLL.charmName(charm.r)} — ${describe(charm)}`;
+      // No title= on filled cells: the hover card covers them, and a native tooltip
+      // would fade in on top of it a moment later.
+      el.removeAttribute("title");
+      el.setAttribute("aria-label", `${window.ROLL.charmName(charm.r)} — ${describe(charm)}`);
     } else {
       el.draggable = false;
       c.icon.classList.add("hidden");
       c.slots.classList.add("hidden");
       c.slot.textContent = flat + 1;
       el.title = `Slot ${flat + 1} — empty`;
+      el.setAttribute("aria-label", `Slot ${flat + 1}, empty`);
     }
   }
 
@@ -183,44 +189,121 @@ window.UI = (function () {
     $("capacityPill").textContent = `${window.BOX.count()} / ${window.BOX.BOX_SIZE}`;
   }
 
-  // One-line summary used in tooltips.
+  // One-line summary, used as the accessible name on a cell. The hover card below
+  // carries the same facts laid out properly; this is what a screen reader gets.
   function describe(c) {
     const parts = (c.k || []).map(s => `${window.ROLL.treeName(s[0])} ${s[1] > 0 ? "+" : ""}${s[1]}`);
-    if (c.s > 0) parts.push(`${c.s} slot${c.s === 1 ? "" : "s"}`);
+    parts.push(c.s > 0 ? `${c.s} slot${c.s === 1 ? "" : "s"}` : "no slots");
     return parts.join(", ");
   }
 
+  // ── Charm hover card ─────────────────────────────────────────────────────────
+  // Native title= is slow to appear, unstyled, and can't colour a negative skill
+  // red — which is exactly the thing you want to spot before melding a charm away.
+  let tipAnchor = null;
+
+  function tipHtml(c) {
+    const tier = window.ROLL.tierOf(c.r);
+    const skills = (c.k || []).map(s => {
+      const cls = s[1] > 0 ? "pos" : s[1] < 0 ? "neg" : "";
+      return `<div class="tip-row"><span class="k">${esc(window.ROLL.treeName(s[0]))}</span>
+        <span class="v ${cls}">${s[1] > 0 ? "+" : ""}${s[1]}</span></div>`;
+    }).join("");
+    const pips = c.s > 0
+      ? `<span class="tip-pips">${"<i></i>".repeat(c.s)}</span>${c.s}`
+      : "None";
+    const god = window.ROLL.isGod(c);
+    return `<div class="tip-head">
+        <div class="tip-icon"><img src="${charmIcon(c)}" alt=""></div>
+        <div><div class="tip-name">${esc(window.ROLL.charmName(c.r))}</div>
+          <div class="tip-tier">${esc(tier)} table</div>
+          ${god ? `<span class="tip-god">God charm</span>` : ""}</div>
+      </div>
+      <div class="tip-row"><span class="k">Rarity</span>
+        <span class="v"><span class="tip-rarity rarity-${c.r}">${c.r}</span></span></div>
+      <div class="tip-row"><span class="k">Slots</span><span class="v">${pips}</span></div>
+      <div class="tip-sec">Skills</div>
+      ${skills || `<div class="tip-none">No skills.</div>`}
+      <div class="tip-sec">Value</div>
+      <div class="tip-row"><span class="k">Sells for</span>
+        <span class="v">${window.ROLL.charmValue(c).toLocaleString()}z</span></div>`;
+  }
+
+  // Anchored to the cell, not the cursor: a card that chases the pointer across a
+  // 10x10 grid is unreadable. Flips to the other side or above when it would run
+  // off the viewport.
+  function placeTip(anchorEl) {
+    const tip = $("charmTip");
+    const a = anchorEl.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const M = 8;
+    let x = a.right + M;
+    if (x + t.width > innerWidth - M) x = a.left - t.width - M;
+    if (x < M) x = Math.min(M, innerWidth - t.width - M);
+    let y = a.top;
+    if (y + t.height > innerHeight - M) y = innerHeight - t.height - M;
+    if (y < M) y = M;
+    tip.style.left = Math.round(x) + "px";
+    tip.style.top = Math.round(y) + "px";
+  }
+
+  function showTip(charm, anchorEl) {
+    if (!charm || tipAnchor === anchorEl) return;
+    tipAnchor = anchorEl;
+    const tip = $("charmTip");
+    tip.innerHTML = tipHtml(charm);
+    tip.classList.remove("hidden");
+    tip.setAttribute("aria-hidden", "false");
+    placeTip(anchorEl);          // measured after fill, so the flip uses real height
+  }
+
+  function hideTip() {
+    if (!tipAnchor) return;
+    tipAnchor = null;
+    const tip = $("charmTip");
+    tip.classList.add("hidden");
+    tip.setAttribute("aria-hidden", "true");
+  }
+
   // ── Melding pot ──────────────────────────────────────────────────────────────
+  // The pot is a queue, not a set of buttons: one row resolves each time a
+  // Brachydios dies, top-down. So each row shows its place in that queue rather than
+  // a Meld control you could press at will.
   function renderPot() {
     const B = window.BOX;
+    const queue = B.queuedRows();
+    const place = Object.fromEntries(queue.map((r, i) => [r, i]));
     let html = "";
     for (let r = 0; r < B.POT_ROWS; r++) {
       let slots = "";
       for (let c = 0; c < B.POT_COLS; c++) {
         const charm = B.potGet(r, c);
-        slots += `<div class="pot-slot${charm ? ` filled rarity-${charm.r}` : ""}"
-          data-pot="${r}-${c}"${charm ? ` title="${esc(window.ROLL.charmName(charm.r))} — ${esc(describe(charm))}. Click to return it"` : ' title="Drag a charm here"'}>
+        slots += `<div class="pot-slot${charm ? ` filled rarity-${charm.r}` : ""}${charm && window.ROLL.isGod(charm) ? " god" : ""}"
+          data-pot="${r}-${c}"${charm ? "" : ' title="Drag a charm here"'}>
           ${charm ? `<img src="${charmIcon(charm)}" alt="">` : ""}</div>`;
       }
-      const ready = !B.rowProblem(r);
-      html += `<div class="pot-row">${slots}
-        <button type="button" class="pot-meld${ready ? "" : " notready"}" data-meld="${r}">Meld</button>
-      </div>`;
+      let tag, cls;
+      if (place[r] === 0) { tag = "Next hunt"; cls = "next"; }
+      else if (place[r] !== undefined) { tag = `${place[r] + 1} hunts`; cls = "waiting"; }
+      else if ([0, 1, 2].some(c => B.potGet(r, c))) { tag = "Not set"; cls = "blocked"; }
+      else { tag = ""; cls = "idle"; }
+      html += `<div class="pot-row">${slots}<span class="pot-queue ${cls}">${tag}</span></div>`;
     }
     $("pot").innerHTML = html;
 
-    // The status line explains the first row that isn't ready, rather than greying
-    // out ten buttons with no reason given.
-    const ready = [];
+    // The status line explains the first row that's loaded but can't resolve, rather
+    // than leaving ten silent rows and no reason why nothing happens.
     let firstProblem = null;
     for (let r = 0; r < B.POT_ROWS; r++) {
-      const p = B.rowProblem(r);
-      if (!p) ready.push(r);
-      else if (firstProblem === null && B.potGet(r, 0)) firstProblem = `Row ${r + 1}: ${p}`;
+      if (place[r] !== undefined) continue;
+      if (!B.potGet(r, 0) && !B.potGet(r, 1) && !B.potGet(r, 2)) continue;
+      firstProblem = `Row ${r + 1}: ${B.rowProblem(r)}`;
+      break;
     }
-    $("potStatus").textContent = ready.length
-      ? `${ready.length} row${ready.length === 1 ? "" : "s"} ready to meld.`
-      : (firstProblem || "Drag three charms of the same rarity into a row.");
+    $("potStatus").textContent = queue.length
+      ? `${queue.length} meld${queue.length === 1 ? "" : "s"} queued — one resolves each hunt.` +
+        (firstProblem ? ` ${firstProblem}` : "")
+      : (firstProblem || "Drag three charms of the same rarity into a row. One meld resolves per hunt.");
   }
 
   // ── Detail ───────────────────────────────────────────────────────────────────
@@ -238,6 +321,7 @@ window.UI = (function () {
     const tier = window.ROLL.tierOf(c.r);
     let html = `<div class="detail-icon-wrap"><img src="${charmIcon(c)}" alt=""></div>
       <div class="detail-name">${esc(window.ROLL.charmName(c.r))}</div>
+      ${window.ROLL.isGod(c) ? `<div style="text-align:center"><span class="tip-god">God charm</span></div>` : ""}
       <div class="detail-section-title">Charm</div>
       ${row("Rarity", c.r)}
       ${row("Roll table", tier.charAt(0).toUpperCase() + tier.slice(1))}
@@ -310,7 +394,20 @@ window.UI = (function () {
       renderGrid();
       renderDetail();
     });
+    // Hover cards. mouseover/mouseout rather than mouseenter so one listener covers
+    // all 100 cells; showTip no-ops when the anchor hasn't actually changed, so
+    // moving within a cell doesn't rebuild the card.
+    grid.addEventListener("mouseover", ev => {
+      const cell = ev.target.closest(".box-cell");
+      if (!cell) return hideTip();
+      const charm = window.BOX.get(flatIndex(Number(cell.dataset.i)));
+      if (charm) showTip(charm, cell); else hideTip();
+    });
+    grid.addEventListener("mouseout", ev => {
+      if (!ev.relatedTarget || !ev.relatedTarget.closest(".box-cell")) hideTip();
+    });
     grid.addEventListener("dragstart", ev => {
+      hideTip();
       const cell = ev.target.closest(".box-cell");
       if (!cell) return;
       const flat = flatIndex(Number(cell.dataset.i));
@@ -325,8 +422,18 @@ window.UI = (function () {
       if (cell) cell.classList.remove("drag-source");
     });
 
-    // Pot: drop target for box drags, click to unload.
+    // Pot: drop target for box drags, click to unload, same hover card.
     const pot = $("pot");
+    pot.addEventListener("mouseover", ev => {
+      const slot = ev.target.closest(".pot-slot");
+      if (!slot) return hideTip();
+      const [r, c] = slot.dataset.pot.split("-").map(Number);
+      const charm = window.BOX.potGet(r, c);
+      if (charm) showTip(charm, slot); else hideTip();
+    });
+    pot.addEventListener("mouseout", ev => {
+      if (!ev.relatedTarget || !ev.relatedTarget.closest(".pot-slot")) hideTip();
+    });
     pot.addEventListener("dragover", ev => {
       const slot = ev.target.closest(".pot-slot");
       if (!slot) return;
@@ -349,23 +456,12 @@ window.UI = (function () {
       if (window.BOX.potLoad(r, c, from)) { selected = -1; renderAll(); }
     });
     pot.addEventListener("click", ev => {
-      const meldBtn = ev.target.closest("[data-meld]");
-      if (meldBtn) {
-        const r = Number(meldBtn.dataset.meld);
-        const why = window.BOX.rowProblem(r);
-        if (why) return toast(why);
-        const res = window.BOX.meldRow(r);
-        if (!res) return toast("The box is full — sell something first.");
-        flashFresh(res.index);
-        toast(`Melded into a ${window.ROLL.charmName(res.charm.r)}.`);
-        renderAll();
-        return;
-      }
       const slot = ev.target.closest(".pot-slot");
       if (!slot) return;
       const [r, c] = slot.dataset.pot.split("-").map(Number);
       if (!window.BOX.potGet(r, c)) return;
       if (!window.BOX.potUnload(r, c)) return toast("The box is full — sell something first.");
+      hideTip();
       renderAll();
     });
 
@@ -405,17 +501,32 @@ window.UI = (function () {
       renderAll();
     });
 
+    // Sell Junk takes everything up to the chosen rarity — but never a god charm.
+    // Bulk actions are exactly where you'd lose one without noticing.
+    const junkSel = $("junkRarity");
+    junkSel.value = String(junkMax);
+    junkSel.addEventListener("change", () => {
+      junkMax = Number(junkSel.value) || 1;
+      hooks.settingChanged("junkMax", junkMax);
+    });
     $("sellJunkBtn").addEventListener("click", () => {
+      const isJunk = c => c.r <= junkMax && !window.ROLL.isGod(c);
+      const n = countWhere(isJunk);
+      const spared = countWhere(c => c.r <= junkMax && window.ROLL.isGod(c));
+      const upTo = junkMax === 1 ? "rarity 1" : `rarity 1–${junkMax}`;
+      if (!n) return toast(`Nothing at ${upTo} to sell.`);
       const doIt = () => {
-        const res = window.BOX.sellWhere(c => c.r <= 2);
-        toast(res.count ? `Sold ${res.count} charms for ${res.zenny.toLocaleString()}z.` : "Nothing at rarity 1–2 to sell.");
+        const res = window.BOX.sellWhere(isJunk);
+        toast(`Sold ${res.count} charm${res.count === 1 ? "" : "s"} for ${res.zenny.toLocaleString()}z.` +
+          (spared ? ` Kept ${spared} god charm${spared === 1 ? "" : "s"}.` : ""));
         selected = -1;
         renderAll();
       };
-      const n = countWhere(c => c.r <= 2);
-      if (!n) return toast("Nothing at rarity 1–2 to sell.");
-      if (confirmBulk) hooks.confirm("Sell junk charms?", `This sells ${n} charm${n === 1 ? "" : "s"} at rarity 1–2.`, doIt);
-      else doIt();
+      if (confirmBulk) {
+        hooks.confirm("Sell junk charms?",
+          `This sells ${n} charm${n === 1 ? "" : "s"} at ${upTo}.` +
+          (spared ? ` ${spared} god charm${spared === 1 ? " is" : "s are"} kept.` : ""), doIt);
+      } else doIt();
     });
     $("emptyBoxBtn").addEventListener("click", () => {
       const n = window.BOX.count();
@@ -428,13 +539,6 @@ window.UI = (function () {
     $("autoFillBtn").addEventListener("click", () => {
       const n = window.BOX.autoFill();
       toast(n ? `Filled ${n} row${n === 1 ? "" : "s"}.` : "No rarity has three spare charms.");
-      renderAll();
-    });
-    $("meldAllBtn").addEventListener("click", () => {
-      const res = window.BOX.meldAll();
-      if (!res.length) return toast("No row is ready to meld.");
-      res.forEach(r => flashFresh(r.index));
-      toast(`Melded ${res.length} row${res.length === 1 ? "" : "s"}.`);
       renderAll();
     });
     $("emptyPotBtn").addEventListener("click", () => {
@@ -468,12 +572,17 @@ window.UI = (function () {
 
   const setShowDamage = v => { showDamage = !!v; };
   const setConfirmBulk = v => { confirmBulk = !!v; };
+  const setJunkMax = v => {
+    junkMax = Math.min(10, Math.max(1, Number(v) || 2));
+    const sel = $("junkRarity");
+    if (sel) sel.value = String(junkMax);
+  };
   const clearSelection = () => { selected = -1; };
 
   return {
     buildGrid, renderAll, renderArena, renderGrid, renderPot, renderDetail, renderOres,
-    renderShop, renderRoster, initEvents, toast, floatDamage, hitFlash,
-    setShowDamage, setConfirmBulk, clearSelection, esc,
+    renderShop, renderRoster, initEvents, toast, floatDamage, hitFlash, flashFresh,
+    setShowDamage, setConfirmBulk, setJunkMax, clearSelection, hideTip, esc,
     get page() { return page; },
     set page(p) { page = p; },
   };
