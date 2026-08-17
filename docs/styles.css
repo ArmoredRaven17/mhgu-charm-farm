@@ -247,6 +247,12 @@ kbd{
 .shop-cost img{width:15px;height:15px;object-fit:contain;vertical-align:-3px}
 .shop-cost .afford{color:var(--positive)}
 .shop-cost .short{color:var(--negative)}
+/* Prestige closes the smithy list. Gold when it's ready, because it's the same kind of
+   event as a god charm — the thing you were working towards, not another purchase. */
+.prestige-panel{margin-top:10px;border-top:1px solid var(--line)}
+.prestige-panel.ready{border-color:#ffd24a;color:#ffd24a}
+.prestige-panel.ready .shop-desc{color:#ffd24a;opacity:.8}
+.prestige-panel.ready:hover{background:#ffd24a1a}
 
 /* ── Charm box ───────────────────────────────────────────────────────── */
 .box-nav{

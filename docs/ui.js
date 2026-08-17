@@ -66,7 +66,9 @@ window.UI = (function () {
   function renderArena() {
     const F = window.FARM, v = F.variant(), s = F.state;
     $("arenaName").textContent = v.name;
-    $("arenaRank").textContent = `${F.rankName()} · ${s.kills} hunt${s.kills === 1 ? "" : "s"}`;
+    const p = F.prestige();
+    $("arenaRank").textContent = `${F.rankName()} · ${s.kills} hunt${s.kills === 1 ? "" : "s"}` +
+      (p ? ` · Prestige ${p}` : "");
 
     const img = $("targetImg");
     const src = SPRITES[v.icon];
@@ -155,7 +157,7 @@ window.UI = (function () {
     const F = window.FARM;
     $("shop").innerHTML = F.UPGRADES.map(up => {
       const level = F.lvl(up.id);
-      const maxed = level >= up.max;
+      const maxed = level >= F.maxLevel(up);
       const label = F.upgradeName(up);      // "Hire a Palico" becomes "Upgrade Palico Gear"
       if (maxed) {
         // A hire you already employ stays clickable — the row becomes the switch that
@@ -196,7 +198,37 @@ window.UI = (function () {
           <span class="${haveO ? "afford" : "short"}"><img src="${oreIcon(oc.ore)}" alt="">
             ${oc.qty}x ${esc(ore.name)}</span>
         </div></button>`;
-    }).join("");
+    }).join("") + prestigePanel();
+  }
+
+  // The last thing in the smithy: what you do once there is nothing left to buy.
+  // Hidden entirely until you've bought at least one thing, so a brand-new save isn't
+  // introduced to its own reset button before it has met the monster.
+  function prestigePanel() {
+    const F = window.FARM;
+    const p = F.prestige();
+    const levelled = F.UPGRADES.filter(u => !u.hire);
+    const left = levelled.filter(u => F.lvl(u.id) < F.maxLevel(u)).length;
+    if (!p && !levelled.some(u => F.lvl(u.id) > 0)) return "";
+
+    const gains = `+${Math.round((F.dropMult() - 1) * 100)}% charms and ` +
+      `+${Math.round((F.damageMult() - 1) * 100)}% damage`;
+    const next = `Next: +${Math.round(F.PRESTIGE_DROP * 100)}% charms, ` +
+      `+${Math.round(F.PRESTIGE_DAMAGE * 100)}% damage, and every upgrade gains ` +
+      `${Math.round(F.PRESTIGE_LEVELS * 100)}% more levels to climb.`;
+    const head = p ? `Prestige ${p} — ${gains}` : "Prestige";
+
+    if (left) {
+      return `<div class="shop-item maxed prestige-panel">
+        <div class="shop-row"><span class="shop-name">${esc(head)}</span>
+          <span class="shop-lv">${left} to go</span></div>
+        <div class="shop-desc">Finish every upgrade to start again stronger. ${esc(next)}</div></div>`;
+    }
+    return `<button type="button" class="shop-item prestige-panel ready" data-prestige="1"
+      aria-label="${esc(head + ". Ready. " + next)}">
+      <div class="shop-row"><span class="shop-name">${esc(head)}</span>
+        <span class="shop-lv">Ready</span></div>
+      <div class="shop-desc">${esc(next)}</div></button>`;
   }
 
   // ── Box grid ─────────────────────────────────────────────────────────────────
@@ -584,6 +616,7 @@ window.UI = (function () {
         renderShop();
         return;
       }
+      if (ev.target.closest("[data-prestige]")) { hooks.prestige(); return; }
       const btn = ev.target.closest("[data-buy]");
       if (!btn) return;
       const why = window.FARM.buy(btn.dataset.buy);

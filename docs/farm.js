@@ -89,12 +89,26 @@ window.FARM = (function () {
     { name: "High Rank", kills: 25 },
     { name: "G Rank", kills: 100 },
   ];
-  // Charm tier weights per rank. Enduring stays a jackpot even at G.
+  // Charm tier weights per rank, and one new tier unlocked per promotion — which lines
+  // the charm tables up with the rank ladder exactly:
+  //
+  //   Low Rank    mystery + shining     rarity 1-4    Pawn .. Rook
+  //   High Rank   adds timeworn         rarity 5-7    .. Dragon
+  //   G Rank      adds enduring         rarity 8-10   .. Creator
+  //
+  // So rank is the only thing deciding which talismans exist for you, and every
+  // promotion opens a table you have genuinely never seen. Letting a Creator Talisman
+  // fall out of a Low Rank hunt, even at 1-in-100, makes the whole ladder pointless:
+  // the best table would already be open on hunt one.
   const TIER_WEIGHTS = [
-    { mystery: 60, shining: 30, timeworn: 9, enduring: 1 },
-    { mystery: 25, shining: 40, timeworn: 30, enduring: 5 },
+    { mystery: 60, shining: 40, timeworn: 0, enduring: 0 },
+    { mystery: 25, shining: 42, timeworn: 33, enduring: 0 },
     { mystery: 5, shining: 20, timeworn: 50, enduring: 25 },
   ];
+  // The lowest rank each tier may appear at, enforced after a variant's `shift` has
+  // been applied — otherwise a Dragonite Brachydios at Low Rank could shift its way
+  // into a locked table and hand you the very thing the weights just excluded.
+  const TIER_MIN_RANK = { mystery: 0, shining: 0, timeworn: 1, enduring: 2 };
 
   // ── Upgrades ─────────────────────────────────────────────────────────────────
   // Names are deliberately plain; rename them freely, nothing keys off the label.
@@ -108,36 +122,37 @@ window.FARM = (function () {
     // that low, and without it the most common drop in the game would never be asked
     // for by anything.
     { id: "dmg", name: "Sharpness", levelled: true, desc: "+1 damage per click",
-      base: 100, mult: 1.20, max: 999, ore: 0 },
+      base: 171, mult: 1.15, max: 60, ore: 0 },
     { id: "crit", name: "Critical Eye", levelled: true, desc: "+2% critical chance",
-      base: 600, mult: 1.26, max: 20, ore: 3 },
+      base: 8404, mult: 1.22, max: 20, ore: 3 },
     { id: "critdmg", name: "Crit Boost", levelled: true, desc: "+0.25x critical damage",
-      base: 1500, mult: 1.28, max: 16, ore: 4 },
+      base: 14481, mult: 1.25, max: 16, ore: 4 },
     // nameAfter: what the entry is called once you own at least one level. The first
     // purchase is the hire; everything after it is kitting them out.
     { id: "dps", name: "Hire a Palico", nameAfter: "Upgrade Palico Gear",
       desc: "+2 damage per second, hands-free",
-      base: 500, mult: 1.21, max: 200, ore: 3 },
+      base: 479, mult: 1.16, max: 50, ore: 3 },
     // Distinct from a Palico on purpose: a Palico adds flat damage per second, a
     // hired hunter throws a real attack — so these scale with your click damage and
     // can crit. Late on they're worth far more than raw DPS, which is why they cost
     // more and cap lower.
     { id: "hunters", name: "Hunters for Hire", nameAfter: "Upgrade Hunters for Hire Gear",
       desc: "+1 attack per second, using your click damage",
-      base: 5000, mult: 1.29, max: 40, ore: 6 },
+      base: 6346, mult: 1.2, max: 30, ore: 6 },
+    { id: "zenny", name: "Crazy Lucky Cat", levelled: true, desc: "+15% zenny per kill",
+      base: 40362, mult: 1.3, max: 12, ore: 5 },
+    // The supply side of the smithy: every other upgrade spends ore, this one earns it.
+    // Named after the MHGU skill that adds reward slots, which is the same idea.
+    { id: "luck", name: "Good Luck", levelled: true, desc: "+1 ore from every hunt",
+      base: 40362, mult: 1.3, max: 12, ore: 4 },
+
     // The steep 3.2x is deliberate — each level is a flat multiplier on every charm
     // you'll ever get — but the 40,000 base it was raised to in the cost rebalance
     // was never checked on its own, and it locked a light player out of level one
     // entirely across a whole session. The steepness is what makes it a long goal;
     // the base only decides whether you can start.
     { id: "drop", name: "Charm Chaser", levelled: true, desc: "+1 charm per kill",
-      base: 12000, mult: 3.2, max: 6, ore: 8 },
-    { id: "zenny", name: "Crazy Lucky Cat", levelled: true, desc: "+15% zenny per kill",
-      base: 5000, mult: 1.38, max: 12, ore: 5 },
-    // The supply side of the smithy: every other upgrade spends ore, this one earns it.
-    // Named after the MHGU skill that adds reward slots, which is the same idea.
-    { id: "luck", name: "Good Luck", levelled: true, desc: "+1 ore from every hunt",
-      base: 8000, mult: 1.34, max: 12, ore: 4 },
+      base: 26353, mult: 1.45, max: 12, ore: 8 },
 
     // The two hires. One-offs, priced to be the thing you save for rather than
     // something you drift into: each wants a stack of a G-rank ore, and Ultimas
@@ -196,7 +211,7 @@ window.FARM = (function () {
   // by levels past 80 that no measured session ever reached. An upgrade with fewer
   // levels than there are ores skips rungs rather than stopping partway up.
   const oreRung = (up, level) =>
-    Math.min(ORE_LADDER.length - 1, Math.floor(level / up.max * ORE_LADDER.length));
+    Math.min(ORE_LADDER.length - 1, Math.floor(level / maxLevel(up) * ORE_LADDER.length));
 
   // The quantity climbs every second level. It used to be level/4, which meant the
   // first four levels of anything cost a single ore each — you could buy a row of
@@ -249,9 +264,54 @@ window.FARM = (function () {
     // unlocked: he's the one already standing in front of you, and a picker showing
     // fourteen locked tiles on a fresh save reads as broken rather than as progression.
     // `gods` is a running tally so each find can announce which number it is.
-    return { zenny: 0, kills: 0, hp: 0, variant: "base", upgrades: {}, ores: {}, seen: { base: true }, gods: 0 };
+    return { zenny: 0, kills: 0, hp: 0, variant: "base", upgrades: {}, ores: {},
+      seen: { base: true }, gods: 0, prestige: 0 };
   }
   const hasSeen = id => !!(state && state.seen && state.seen[id]);
+
+  // ── Prestige ─────────────────────────────────────────────────────────────────
+  // Clear the smithy and start the climb again, keeping a permanent multiplier. What
+  // survives is the collection: the charm box, the god charms, the coats you've met
+  // and the four hires. What goes is everything you'd re-earn — upgrades, zenny, ore
+  // and your rank, so you're back on the base Brachydios at Low Rank.
+  //
+  // The reward is split across two smaller multipliers rather than one large one:
+  // drops give you more charms per hunt directly, damage gets you through the HP curve
+  // faster so the hunts come quicker too. Both compound with prestige count.
+  const PRESTIGE_DROP = 0.35;    // +35% charms per hunt per prestige
+  const PRESTIGE_DAMAGE = 0.50;  // +50% damage per prestige
+  // Each climb is longer than the last: every upgrade gains a quarter of its base cap.
+  const PRESTIGE_LEVELS = 0.25;
+
+  const prestige = () => (state && state.prestige) || 0;
+  const dropMult = () => 1 + prestige() * PRESTIGE_DROP;
+  const damageMult = () => 1 + prestige() * PRESTIGE_DAMAGE;
+  // An upgrade's cap for the run you're on. Used everywhere `up.max` used to be, so
+  // the ore ladder still spreads across whatever the current cap happens to be.
+  const maxLevel = up => up.hire ? up.max
+    : Math.round(up.max * (1 + prestige() * PRESTIGE_LEVELS));
+
+  // You may prestige once the smithy is finished — every levelled upgrade at its cap.
+  // That makes the button the reward for clearing the shop rather than a trap you can
+  // press early and lose progress to.
+  const canPrestige = () =>
+    UPGRADES.filter(u => !u.hire).every(u => lvl(u.id) >= maxLevel(u));
+
+  function doPrestige() {
+    if (!canPrestige()) return false;
+    const keep = {
+      seen: state.seen,           // the coats you've met stay met
+      gods: state.gods,           // and the god charm tally keeps counting
+      prestige: prestige() + 1,
+      upgrades: {},
+    };
+    // The hires are quality of life you already paid for; re-buying them every climb
+    // would repeat the slowest part of the grind rather than adding to it.
+    for (const u of UPGRADES) if (u.hire && lvl(u.id) > 0) keep.upgrades[u.id] = lvl(u.id);
+    state = Object.assign(fresh(), keep);
+    spawn();
+    return true;
+  }
 
   function rankIndex() {
     let r = 0;
@@ -267,12 +327,12 @@ window.FARM = (function () {
   }
 
   const lvl = id => state.upgrades[id] || 0;
-  const clickDamage = () => 1 + lvl("dmg");
+  const clickDamage = () => Math.round((1 + lvl("dmg")) * damageMult());
   const critChance = () => Math.min(0.5, lvl("crit") * 0.02);
   const critMult = () => 2 + lvl("critdmg") * 0.25;
-  const dps = () => lvl("dps") * 2;
+  const dps = () => Math.round(lvl("dps") * 2 * damageMult());
   const autoClicks = () => lvl("hunters");        // attacks per second
-  const dropCount = () => 1 + lvl("drop");
+  const dropCount = () => Math.round((1 + lvl("drop")) * dropMult());
   const zennyMult = () => 1 + lvl("zenny") * 0.15;
   const oreBonus = () => lvl("luck");             // extra ore on every haul
 
@@ -291,12 +351,18 @@ window.FARM = (function () {
   // Roll the charms a kill produces. The variant's `shift` walks the tier weights up,
   // so a rarer coat really does mean better charms and not just a bigger number.
   function rollDrops(v) {
-    const w = Object.assign({}, TIER_WEIGHTS[rankIndex()]);
+    const rank = rankIndex();
+    const w = Object.assign({}, TIER_WEIGHTS[rank]);
     const order = window.ROLL.TIER_ORDER;
     for (let i = 0; i < v.shift; i++) {
       // Push weight one tier up the ladder, leaving the top tier to accumulate.
       for (let t = order.length - 1; t > 0; t--) w[order[t]] += w[order[t - 1]] * 0.6;
       for (let t = 0; t < order.length - 1; t++) w[order[t]] *= 0.45;
+    }
+    // The rank gate is applied last, so no shift can open a tier this rank shouldn't
+    // see. Its weight falls back to the tier below rather than being discarded.
+    for (let t = order.length - 1; t > 0; t--) {
+      if (rank < TIER_MIN_RANK[order[t]]) { w[order[t - 1]] += w[order[t]]; w[order[t]] = 0; }
     }
     const pairs = order.map(t => [t, w[t]]);
     const out = [];
@@ -382,7 +448,7 @@ window.FARM = (function () {
     const up = upgradeById[id];
     if (!up) return "No such upgrade.";
     const level = lvl(id);
-    if (level >= up.max) return "Already at maximum.";
+    if (level >= maxLevel(up)) return "Already at maximum.";
     const z = zennyCost(up, level);
     const oc = oreCost(up, level);
     const have = state.ores[oc.ore] || 0;
@@ -409,7 +475,7 @@ window.FARM = (function () {
   function oresStillNeeded() {
     const need = new Set();
     for (const up of UPGRADES) {
-      for (let lv = lvl(up.id); lv < up.max; lv++) need.add(oreCost(up, lv).ore);
+      for (let lv = lvl(up.id); lv < maxLevel(up); lv++) need.add(oreCost(up, lv).ore);
     }
     return need;
   }
@@ -427,7 +493,7 @@ window.FARM = (function () {
     let best = null;
     for (const up of UPGRADES) {
       const level = lvl(up.id);
-      if (level >= up.max) continue;
+      if (level >= maxLevel(up)) continue;
       if (canBuy(up.id)) continue;                    // returns a reason when you can't
       const rung = ORE_LADDER.indexOf(oreCost(up, level).ore);
       const cost = zennyCost(up, level);
@@ -549,7 +615,10 @@ window.FARM = (function () {
     nextPurchase,
     zennyCost, oreCost,
     get state() { return state; },
-    rankIndex, rankName, variant, hpMax, hasSeen, upgradeName,
+    rankIndex, rankName, variant, hpMax, hasSeen, upgradeName, maxLevel,
+    prestige, dropMult, damageMult, canPrestige, doPrestige,
+    PRESTIGE_DROP, PRESTIGE_DAMAGE, PRESTIGE_LEVELS,
+    rollDrops,        // exported so the rank gate on charm rarity can be tested
     clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, oreBonus, lvl,
   };
 })();

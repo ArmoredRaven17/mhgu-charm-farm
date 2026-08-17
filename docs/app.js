@@ -449,6 +449,22 @@
   UI.initEvents({
     attack: () => { UI.showHit(FARM.click()); },
     confirm: askConfirm,
+    // Prestige throws a run away, so it asks first and spells out both halves — what
+    // goes and what survives. The charm box is the half people will worry about.
+    prestige: () => {
+      if (!FARM.canPrestige()) return;
+      const n = FARM.prestige() + 1;
+      askConfirm(`Prestige ${n}?`,
+        "Your upgrades, zenny, ore and rank all go back to the start. Your charm box, " +
+        "god charms, unlocked themes and the four hires are kept. In exchange every " +
+        "run from here drops more charms and hits harder.",
+        () => {
+          if (!FARM.doPrestige()) return;
+          UI.renderAll();
+          BOX.markDirty();
+          toast(`Prestige ${n}. The smithy is empty again — and you hit a lot harder.`, 4200, true);
+        });
+    },
     settingChanged: (key, value) => { state[key] = value; persistSettings(); },
   });
 
