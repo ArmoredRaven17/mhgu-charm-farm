@@ -230,19 +230,25 @@ window.BOX = (function () {
 
   // Fill the pot greedily from the box: whichever rarities have three or more spare
   // copies get loaded, best rarity first. Saves a lot of dragging.
+  // Index the box once and deal from it, rather than rescanning all 2000 slots for
+  // every row. Maximeld XIV calls this after every single hunt, so the old shape was
+  // doing twenty thousand slot reads per kill — and a replayed absence made that
+  // visible as a ten-second freeze on load.
   function autoFill() {
     let loaded = 0;
+    const byRarity = {};
+    for (let i = 0; i < BOX_SIZE; i++) {
+      const c = box[i];
+      if (!c || window.ROLL.isGod(c)) continue;
+      (byRarity[c.r] = byRarity[c.r] || []).push(i);
+    }
+    // Best rarity first — melding up from a high rarity is worth more than from a low.
+    const rarities = Object.keys(byRarity).map(Number).sort((a, b) => b - a);
     for (let r = 0; r < POT_ROWS; r++) {
       if (pot[r].some(Boolean)) continue;
-      const byRarity = {};
-      for (let i = 0; i < BOX_SIZE; i++) {
-        if (!box[i] || window.ROLL.isGod(box[i])) continue;
-        (byRarity[box[i].r] = byRarity[box[i].r] || []).push(i);
-      }
-      const pick = Object.keys(byRarity).map(Number).filter(k => byRarity[k].length >= 3)
-        .sort((a, b) => b - a)[0];
+      const pick = rarities.find(k => byRarity[k].length >= 3);
       if (pick === undefined) break;
-      const idx = byRarity[pick].slice(0, 3);
+      const idx = byRarity[pick].splice(0, 3);      // consumed, so the next row can't reuse them
       for (let c = 0; c < 3; c++) { pot[r][c] = box[idx[c]]; box[idx[c]] = null; }
       restamp(r);
       loaded++;

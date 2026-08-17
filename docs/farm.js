@@ -125,6 +125,10 @@ window.FARM = (function () {
     // Crystal is the rarest drop in the game.
     { id: "maximeld", name: "Maximeld XIV", desc: "Loads the Melding Pot for you after every hunt",
       base: 60000, mult: 1, max: 1, ore: 16, oreQty: 15 },
+    // Sells at whatever "Junk ≤" is already set to, so the hire adds no new control —
+    // the dropdown you were already using becomes her instructions.
+    { id: "neko", name: "Neko", desc: "Sells junk charms for you, at your Junk ≤ setting",
+      base: 90000, mult: 1, max: 1, ore: 18, oreQty: 12 },
     { id: "argosy", name: "Argosy Captain", desc: "Sells ore no upgrade still needs, plus any surplus",
       base: 120000, mult: 1, max: 1, ore: 20, oreQty: 12 },
     // 10 Ultimas rather than 20: the ore ladder caps at Ultimas Crystal, so the late
@@ -383,6 +387,41 @@ window.FARM = (function () {
     }, 100);
   }
 
+  // What one attack lands on average, crits included. Used by the offline catch-up
+  // and by anything that needs a rate rather than a single roll.
+  const avgHit = () => clickDamage() * (1 + critChance() * (critMult() - 1));
+
+  // Time passed while the tab was shut. Palicoes and hired hunters kept working, so
+  // replay what they'd have done — through the real kill path, so drops, ore, melds
+  // and the hires all happen exactly as they would have live.
+  //
+  // Bounded twice over: the caller caps how many hours count, and MAX_CATCHUP_KILLS
+  // caps the loop itself, because a long absence with heavy DPS could otherwise ask
+  // for hundreds of thousands of kills and hang the tab on load.
+  const MAX_CATCHUP_KILLS = 3000;
+  function catchUp(seconds) {
+    if (!state || !(seconds > 0)) return null;
+    const perSecond = dps() + autoClicks() * avgHit();
+    if (perSecond <= 0) return null;             // nothing hired, nothing happened
+
+    const killsBefore = state.kills, zennyBefore = state.zenny;
+    let budget = perSecond * seconds;
+    let guard = 0;
+    while (budget > 0 && guard < MAX_CATCHUP_KILLS) {
+      const take = Math.min(budget, state.hp);
+      hit(take, false, true);
+      budget -= take;
+      guard++;
+      if (budget <= 1e-9) break;
+    }
+    return {
+      seconds,
+      kills: state.kills - killsBefore,
+      zenny: Math.round(state.zenny - zennyBefore),
+      capped: guard >= MAX_CATCHUP_KILLS,
+    };
+  }
+
   function init(saved, hooks) {
     state = Object.assign(fresh(), saved || {});
     state.upgrades = Object.assign({}, (saved && saved.upgrades) || {});
@@ -408,7 +447,7 @@ window.FARM = (function () {
 
   return {
     VARIANTS, RANKS, UPGRADES, ORES, oreById, variantById, ORE_LADDER,
-    init, reset, click, hit, buy, canBuy, sellOre, oresStillNeeded, spawn,
+    init, reset, click, hit, buy, canBuy, sellOre, oresStillNeeded, spawn, catchUp, avgHit,
     zennyCost, oreCost,
     get state() { return state; },
     rankIndex, rankName, variant, hpMax, hasSeen,

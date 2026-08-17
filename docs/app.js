@@ -242,7 +242,44 @@
   // How much of a still-needed ore the Argosy Captain leaves you. Enough to cover
   // several upgrade levels without hoarding.
   const ARGOSY_RESERVE = 60;
-  let argosyEarned = 0;
+  let argosyEarned = 0, nekoEarned = 0;
+
+  // Set while replaying an absence. The catch-up runs the real kill path thousands of
+  // times, and each kill would otherwise rebuild the shop and ore strip with innerHTML
+  // — so painting is suppressed and done once at the end.
+  let quiet = false;
+  let offlineGod = null;
+
+  // How much of an absence counts. Beyond this you're not "away", you've stopped
+  // playing — and an unbounded window would let a save sat on for a month trivialise
+  // the whole economy on one reload.
+  const MAX_OFFLINE_HOURS = 8;
+  const MIN_OFFLINE_SECONDS = 60;
+
+  // Replay what the Palicoes and hired hunters did while the tab was shut, then say
+  // what happened. Painting is suppressed for the duration and done once at the end.
+  function applyOfflineProgress(savedAt) {
+    const parsed = Date.parse(savedAt || "");
+    if (!parsed) return;
+    const away = (Date.now() - parsed) / 1000;
+    if (!(away >= MIN_OFFLINE_SECONDS)) return;
+    const counted = Math.min(away, MAX_OFFLINE_HOURS * 3600);
+
+    quiet = true;
+    offlineGod = null;
+    let summary = null;
+    try { summary = FARM.catchUp(counted); }
+    finally { quiet = false; }
+    if (!summary || !summary.kills) return;
+
+    const hrs = Math.floor(counted / 3600), mins = Math.round((counted % 3600) / 60);
+    const span = hrs ? `${hrs}h ${mins}m` : `${mins}m`;
+    let msg = `Away ${span} — your Palicoes and hunters landed ${summary.kills.toLocaleString()} ` +
+      `hunt${summary.kills === 1 ? "" : "s"} and ${summary.zenny.toLocaleString()}z.`;
+    if (away > MAX_OFFLINE_HOURS * 3600) msg += ` (Capped at ${MAX_OFFLINE_HOURS} hours.)`;
+    if (offlineGod) msg += ` One of them dropped a god charm.`;
+    toast(msg, offlineGod ? 9000 : 6000);
+  }
 
   function markRunDirty() {
     // Zenny, ore and upgrades live in FARM, so a purchase or a kill has to mark the
@@ -257,7 +294,7 @@
     // Bare HP change: repaint the arena and nothing else. This runs on every click
     // and ten times a second while Palicoes are working, so it must not touch the
     // shop or the ore strip — rebuilding those here is what made purchases misfire.
-    onTick: () => { UI.renderArena(); },
+    onTick: () => { if (!quiet) UI.renderArena(); },
     // A hired hunter's attack should look like an attack — same flash and floating
     // number a click gets, so you can see the crits they land.
     onAutoClick: res => {
@@ -266,6 +303,7 @@
       UI.floatDamage(res.crit ? `${res.dealt}!` : String(res.dealt), res.crit);
     },
     onChange: () => {
+      if (quiet) return;
       UI.renderArena(); UI.renderOres(); UI.renderShop();
       markRunDirty();
     },
@@ -278,6 +316,16 @@
       // Maximeld XIV reloads the pot once the hunt's drops are in, so the row that
       // just resolved is refilled from whatever the kill produced.
       if (FARM.lvl("maximeld") > 0) BOX.autoFill();
+
+      // Neko clears out junk. She reads the same "Junk ≤" dropdown the Sell Junk
+      // button uses, so hiring her doesn't add a control — it just stops you pressing
+      // the button. Low-rarity charms are the ones that pile up worst: Auto-fill can
+      // only load a rarity you hold three of, so a trickle of rarity 1s and 2s never
+      // reaches the pot at all and would otherwise sit there forever.
+      if (FARM.lvl("neko") > 0) {
+        const sale = BOX.sellWhere(c => c.r <= state.junkMax);  // god charms already exempt
+        if (sale.count) nekoEarned += sale.zenny;
+      }
 
       // The Argosy Captain clears the shelves: anything no remaining upgrade level
       // will ever ask for goes entirely, and still-wanted ore is trimmed to a reserve
@@ -307,15 +355,22 @@
           FARM.buy(pick.u.id);
         }
       }
-      // First of its kind: its theme is now yours, so rebuild the picker.
-      if (res.firstOfItsKind && res.variant.theme) {
+      // First of its kind: its theme is now yours, so rebuild the picker. Tracked even
+      // while replaying an absence — you did meet it — but the picker is rebuilt once
+      // at the end rather than on every one of a few thousand catch-up kills.
+      const unlocked = res.firstOfItsKind && res.variant.theme;
+      if (unlocked && !quiet) {
         buildSwatches();
         applyTheme(currentTheme);        // reapplies the `sel` marker to the new tiles
         toast(`${res.variant.name} hunted — its theme is unlocked.`, 4000);
       }
 
-      // A god charm outranks every other thing the hunt could tell you about.
+      // A god charm outranks every other thing the hunt could tell you about. Worth
+      // surfacing even from an offline haul, so it's recorded rather than skipped.
       const god = res.charms.find(ROLL.isGod) || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
+      if (god) offlineGod = god;
+      if (quiet) return;                 // the rest is painting and toasts
+
       if (god) {
         toast(`God charm! A ${ROLL.charmName(god.r)} with three slots and both skills maxed.`, 8000);
       } else if (placed < res.charms.length) {
@@ -329,6 +384,11 @@
     },
   });
   BOX.on(() => {
+    // Also silenced during catch-up. Each replayed kill touches the box several times
+    // over (drops, meld, Auto-fill, Neko), and every touch would otherwise repaint the
+    // grid and rebuild the pot's markup — which is what made an eight-hour absence
+    // block the page for ten seconds on load.
+    if (quiet) return;
     UI.renderGrid();
     UI.renderPot();
     UI.renderDetail();
@@ -357,15 +417,23 @@
     if (BOX.localSaveEnabled) {
       BOX.load(stored);
       BOX.dirty = false;
-      toast("Farm restored.");
+      // The offline haul is the more interesting message, so it replaces the plain
+      // "restored" note when there is one.
+      const before = FARM.state.kills;
+      applyOfflineProgress(stored.savedAt);
+      if (FARM.state.kills === before) toast("Farm restored.");
     } else {
       $("restoreBanner").classList.remove("hidden");
       $("restoreYes").addEventListener("click", () => {
         BOX.load(stored);
         BOX.dirty = false;
         $("restoreBanner").classList.add("hidden");
+        const before = FARM.state.kills;
+        applyOfflineProgress(stored.savedAt);
+        buildSwatches();                 // the absence may have unlocked coats
+        applyTheme(currentTheme);
         UI.renderAll();
-        toast("Farm restored.");
+        if (FARM.state.kills === before) toast("Farm restored.");
       });
       $("restoreNo").addEventListener("click", () => $("restoreBanner").classList.add("hidden"));
     }
