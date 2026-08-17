@@ -27,7 +27,15 @@ window.ROLL = (function () {
 
   // Slot-count weights. Three slots stay genuinely rare even on enduring rolls —
   // a 3-slot charm should feel like a find, not a Tuesday.
-  const SLOT_WEIGHTS = [55, 30, 12, 3];
+  //
+  // This is the dominant lever on god-charm rarity, and it is invented: nothing in
+  // the game data says how often each slot count appears, only which tiers may reach
+  // them. Measured over 2.5M rolls at G-rank drop weights, the last figure moves the
+  // god-charm rate roughly like this — call it +/-10%, since a run only turns up
+  // 70-170 of them:
+  //     3 -> 1 in ~32,000 (~13h active)      6 -> 1 in ~20,000 (~8.5h active)
+  //     5 -> 1 in ~28,000 (~12h active)      8 -> 1 in ~14,000 (~6h active)
+  const SLOT_WEIGHTS = [55, 30, 12, 6];
 
   const ri = n => Math.floor(Math.random() * n);
   const between = (lo, hi) => lo + ri(hi - lo + 1);

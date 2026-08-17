@@ -248,7 +248,7 @@
   // times, and each kill would otherwise rebuild the shop and ore strip with innerHTML
   // — so painting is suppressed and done once at the end.
   let quiet = false;
-  let offlineGod = null, offlineGodHunts = 0;
+  let offlineGod = null, offlineGodHunts = 0, offlineGodNumber = 0;
 
   // How much of an absence counts. Beyond this you're not "away", you've stopped
   // playing — and an unbounded window would let a save sat on for a month trivialise
@@ -266,7 +266,7 @@
     const counted = Math.min(away, MAX_OFFLINE_HOURS * 3600);
 
     quiet = true;
-    offlineGod = null; offlineGodHunts = 0;
+    offlineGod = null; offlineGodHunts = 0; offlineGodNumber = 0;
     let summary = null;
     try { summary = FARM.catchUp(counted); }
     finally { quiet = false; }
@@ -278,8 +278,7 @@
       `hunt${summary.kills === 1 ? "" : "s"} and ${summary.zenny.toLocaleString()}z.`;
     if (away > MAX_OFFLINE_HOURS * 3600) msg += ` (Capped at ${MAX_OFFLINE_HOURS} hours.)`;
     if (offlineGod) {
-      msg += ` One of them dropped a god charm, at ${offlineGodHunts.toLocaleString()} ` +
-        `hunt${offlineGodHunts === 1 ? "" : "s"}.`;
+      msg += ` God Charm #${offlineGodNumber} at ${offlineGodHunts.toLocaleString()} hunts.`;
     }
     toast(msg, offlineGod ? 9000 : 6000);
   }
@@ -371,16 +370,19 @@
       // A god charm outranks every other thing the hunt could tell you about. Worth
       // surfacing even from an offline haul, so it's recorded rather than skipped.
       const god = res.charms.find(ROLL.isGod) || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
-      // Your hunt count when it fell — read here rather than when the message is
-      // built, so one that drops during a replayed absence still reports the right
-      // figure instead of the total after the whole catch-up.
-      const godAt = god ? FARM.state.kills : 0;
-      if (god) { offlineGod = god; offlineGodHunts = godAt; }
+      // Tallied and stamped here rather than when the message is built, so one that
+      // drops during a replayed absence reports the hunt count it actually fell at
+      // instead of the total after the whole catch-up.
+      let godAt = 0, godNumber = 0;
+      if (god) {
+        godAt = FARM.state.kills;
+        godNumber = ++FARM.state.gods;
+        offlineGod = god; offlineGodHunts = godAt; offlineGodNumber = godNumber;
+      }
       if (quiet) return;                 // the rest is painting and toasts
 
       if (god) {
-        toast(`God charm! A ${ROLL.charmName(god.r)} with three slots and both skills maxed — ` +
-          `at ${godAt.toLocaleString()} hunt${godAt === 1 ? "" : "s"}.`, 9000);
+        toast(`God Charm #${godNumber} at ${godAt.toLocaleString()} hunts.`, 9000);
       } else if (placed < res.charms.length) {
         const lost = res.charms.length - placed;
         toast(`Box full — ${lost} charm${lost === 1 ? "" : "s"} lost. Sell or meld something.`, 3600);
