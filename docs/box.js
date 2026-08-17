@@ -132,6 +132,14 @@ window.BOX = (function () {
 
   function emptyBox() { box = new Array(BOX_SIZE).fill(null); touched(); }
 
+  // Where a specific charm object currently sits. Sorting moves the same objects
+  // around, so an index taken before a sort has to be looked up again afterwards.
+  function indexOf(charm) {
+    if (!charm) return -1;
+    for (let i = 0; i < BOX_SIZE; i++) if (box[i] === charm) return i;
+    return -1;
+  }
+
   // ── Melding pot ──────────────────────────────────────────────────────────────
   const potGet = (r, c) => pot[r][c] || null;
 
@@ -358,7 +366,7 @@ window.BOX = (function () {
   return {
     BOX_SIZE, PAGE, POT_ROWS, POT_COLS, SAVE_APP, SAVE_VERSION,
     on, touched, markDirty, emit,
-    get, add, removeAt, setAt, sellAt, sellWhere, sortBox, emptyBox,
+    get, add, removeAt, setAt, sellAt, sellWhere, sortBox, emptyBox, indexOf,
     count, isFull, pages, firstEmpty,
     potGet, potLoad, potUnload, rowReady, rowProblem, meldRow, queuedRows, resolveOneMeld,
     autoFill, emptyPot,

@@ -224,6 +224,7 @@
     confirmBulk: settings.confirmBulk !== false,
     dmgNumbers: settings.dmgNumbers !== false,
     junkMax: settings.junkMax || 2,
+    autoSort: !!settings.autoSort,
     // Kokoto Gal spends everything the moment she can, which is the point — but you
     // may want to save for a hire, so hiring her doesn't take the wallet away.
     kokotoActive: settings.kokotoActive !== false,
@@ -271,6 +272,7 @@
     try { summary = FARM.catchUp(counted); }
     finally { quiet = false; }
     if (!summary || !summary.kills) return;
+    UI.maybeAutoSort();     // once for the whole absence, not once per replayed kill
 
     const hrs = Math.floor(counted / 3600), mins = Math.round((counted % 3600) / 60);
     const span = hrs ? `${hrs}h ${mins}m` : `${mins}m`;
@@ -387,8 +389,12 @@
       } else if (meld) {
         toast(`The pot returned a ${ROLL.charmName(meld.charm.r)}.`);
       }
+      // Last thing before painting, so the pot's output and this hunt's drops are
+      // sorted in with everything else rather than left where they landed. Sorting
+      // moves objects, so the melded charm's index has to be looked up again.
+      const sorted = UI.maybeAutoSort();
       UI.renderAll();
-      if (meld) UI.flashFresh(meld.index);
+      if (meld) UI.flashFresh(sorted ? BOX.indexOf(meld.charm) : meld.index);
     },
   });
   BOX.on(() => {
@@ -415,8 +421,9 @@
     settingChanged: (key, value) => { state[key] = value; persistSettings(); },
   });
 
-  // The select lives in the toolbar, so set it after initEvents has bound it.
+  // These live in the toolbar, so set them after initEvents has bound them.
   UI.setJunkMax(state.junkMax);
+  UI.setAutoSort(state.autoSort);
 
   // Restore. With browser-save on it loads silently; with it off, the banner offers
   // the choice rather than throwing away last session's work without asking.

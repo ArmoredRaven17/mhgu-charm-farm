@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 <div id="app">
@@ -63,6 +63,10 @@
         <span id="pageIndicator" class="page-indicator">Page 1 / 20</span>
         <button id="nextPage" class="nav-btn">Next &rsaquo;</button>
         <span class="spacer"></span>
+        <button type="button" class="toggle mini" id="autoSortToggle" role="switch" aria-checked="false"
+          aria-label="Auto-sort after each hunt"
+          title="Re-apply this sort after every hunt"></button>
+        <span class="nav-label">Auto</span>
         <select id="sortKey" class="mini-select">
           <option value="">— Sort by —</option>
           <option value="rarity">Rarity</option>
@@ -348,8 +352,8 @@
 <script src="data/ores.js?v=1"></script>
 <script src="roll.js?v=6"></script>
 <script src="farm.js?v=21"></script>
-<script src="box.js?v=9"></script>
-<script src="ui.js?v=13"></script>
-<script src="app.js?v=15"></script>
+<script src="box.js?v=10"></script>
+<script src="ui.js?v=14"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

@@ -426,6 +426,10 @@ kbd{
 .toggle[aria-checked="true"]{background:var(--accent-hover);border-color:var(--accent-hover)}
 .toggle[aria-checked="true"]::after{transform:translateX(17px);background:#fff}
 .toggle:hover{filter:brightness(1.15)}
+/* Toolbar-sized, to sit level with the 22px nav buttons rather than tower over them. */
+.toggle.mini{width:30px;height:17px;margin-top:0;flex-shrink:0}
+.toggle.mini::after{width:11px;height:11px;top:2px;left:2px}
+.toggle.mini[aria-checked="true"]::after{transform:translateX(13px)}
 .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:15px}
 .swatch{aspect-ratio:1;border-radius:8px;border:2px solid transparent;cursor:pointer;position:relative;overflow:hidden}
 .swatch.sel{border-color:#fff}

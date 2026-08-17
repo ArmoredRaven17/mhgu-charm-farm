@@ -21,6 +21,7 @@ window.UI = (function () {
   let showDamage = true;
   let confirmBulk = true;
   let junkMax = 2;          // highest rarity Sell Junk will take
+  let autoSort = false;     // re-apply the chosen sort after every hunt
   let toastTimer = null;
   let cells = [];           // the 100 cell divs, built once and repainted in place
 
@@ -515,10 +516,25 @@ window.UI = (function () {
 
     // Sorting.
     const sortKey = $("sortKey"), applySort = $("applySort"), sortDirBtn = $("sortDir");
-    sortKey.addEventListener("change", () => { applySort.disabled = !sortKey.value; });
+    const autoBtn = $("autoSortToggle");
+    const syncAuto = () => autoBtn.setAttribute("aria-checked", autoSort ? "true" : "false");
+    syncAuto();
+    autoBtn.addEventListener("click", () => {
+      autoSort = !autoSort;
+      syncAuto();
+      hooks.settingChanged("autoSort", autoSort);
+      // Switching it on with no sort chosen would silently do nothing forever.
+      if (autoSort && !sortKey.value) toast("Pick a sort type for auto-sort to use.");
+      else if (autoSort) { maybeAutoSort(); renderAll(); }
+    });
+    sortKey.addEventListener("change", () => {
+      applySort.disabled = !sortKey.value;
+      if (autoSort && sortKey.value) { maybeAutoSort(); renderAll(); }
+    });
     sortDirBtn.addEventListener("click", () => {
       sortDir = sortDir === "desc" ? "asc" : "desc";
       sortDirBtn.textContent = sortDir === "desc" ? "Desc ↓" : "Asc ↑";
+      if (autoSort && sortKey.value) { maybeAutoSort(); renderAll(); }
     });
     applySort.addEventListener("click", () => {
       if (!sortKey.value) return;
@@ -568,6 +584,23 @@ window.UI = (function () {
     });
   }
 
+  // Re-apply the chosen sort. Called at the very end of a hunt — after the pot has
+  // resolved and the drops are in — so the charm the pot just returned and everything
+  // that fell this hunt are sorted along with the rest, rather than sitting wherever
+  // they happened to land.
+  //
+  // The inspected charm is followed by identity: sorting shuffles the same objects, so
+  // its index changes even though your selection shouldn't.
+  function maybeAutoSort() {
+    if (!autoSort) return false;
+    const key = $("sortKey").value;
+    if (!key) return false;
+    const held = selected >= 0 ? window.BOX.get(selected) : null;
+    window.BOX.sortBox(key, sortDir);
+    selected = held ? window.BOX.indexOf(held) : -1;
+    return true;
+  }
+
   function countWhere(pred) {
     let n = 0;
     for (let i = 0; i < window.BOX.BOX_SIZE; i++) {
@@ -593,6 +626,11 @@ window.UI = (function () {
 
   const setShowDamage = v => { showDamage = !!v; };
   const setConfirmBulk = v => { confirmBulk = !!v; };
+  const setAutoSort = v => {
+    autoSort = !!v;
+    const el = $("autoSortToggle");
+    if (el) el.setAttribute("aria-checked", autoSort ? "true" : "false");
+  };
   const setJunkMax = v => {
     junkMax = Math.min(10, Math.max(1, Number(v) || 2));
     const sel = $("junkRarity");
@@ -603,7 +641,8 @@ window.UI = (function () {
   return {
     buildGrid, renderAll, renderArena, renderGrid, renderPot, renderDetail, renderOres,
     renderShop, renderRoster, initEvents, toast, floatDamage, hitFlash, flashFresh,
-    setShowDamage, setConfirmBulk, setJunkMax, clearSelection, hideTip, esc,
+    setShowDamage, setConfirmBulk, setJunkMax, setAutoSort, maybeAutoSort,
+    clearSelection, hideTip, esc,
     get page() { return page; },
     set page(p) { page = p; },
   };
