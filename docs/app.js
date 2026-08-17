@@ -377,6 +377,12 @@
       if (god) {
         godAt = FARM.state.kills;
         godNumber = ++FARM.state.gods;
+        // Stamp the charm itself rather than relying on the announcement. A toast is
+        // gone in seconds and you may not be at the screen; the charm keeps its number
+        // and the hunt it fell on for as long as you own it, and it saves with the
+        // rest. Charms found before this existed simply carry no stamp.
+        god.g = godNumber;
+        god.gh = godAt;
         offlineGod = god; offlineGodHunts = godAt; offlineGodNumber = godNumber;
       }
       if (quiet) return;                 // the rest is painting and toasts

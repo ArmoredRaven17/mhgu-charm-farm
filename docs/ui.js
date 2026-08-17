@@ -95,6 +95,10 @@ window.UI = (function () {
         `about ${dmg(rate * avg)} damage per second.`
       : "No hunters hired yet. Each one attacks once a second for your click damage.";
     $("statDrop").textContent = F.dropCount();
+    const gods = F.state.gods || 0;
+    $("statGodsWrap").classList.toggle("hidden", gods === 0);
+    $("statGods").textContent = gods.toLocaleString();
+    $("statGods").title = `${gods} god charm${gods === 1 ? "" : "s"} found in ${s.kills.toLocaleString()} hunts.`;
 
     $("zennyPill").textContent = Math.floor(s.zenny).toLocaleString() + "z";
   }
@@ -263,6 +267,13 @@ window.UI = (function () {
     return parts.join(", ");
   }
 
+  // How a god charm names itself. Ones found since they started being stamped carry
+  // their number and the hunt they fell on; older ones just say what they are.
+  function godLabel(c) {
+    if (!c || !c.g) return "God charm";
+    return `God charm #${c.g}` + (c.gh ? ` · found at ${c.gh.toLocaleString()} hunts` : "");
+  }
+
   // ── Charm hover card ─────────────────────────────────────────────────────────
   // Native title= is slow to appear, unstyled, and can't colour a negative skill
   // red — which is exactly the thing you want to spot before melding a charm away.
@@ -283,7 +294,7 @@ window.UI = (function () {
         <div class="tip-icon"><img src="${charmIcon(c)}" alt=""></div>
         <div><div class="tip-name">${esc(window.ROLL.charmName(c.r))}</div>
           <div class="tip-tier">${esc(tier)} table</div>
-          ${god ? `<span class="tip-god">God charm</span>` : ""}</div>
+          ${god ? `<span class="tip-god">${esc(godLabel(c))}</span>` : ""}</div>
       </div>
       <div class="tip-row"><span class="k">Rarity</span>
         <span class="v"><span class="tip-rarity rarity-${c.r}">${c.r}</span></span></div>
@@ -396,7 +407,7 @@ window.UI = (function () {
     const tier = window.ROLL.tierOf(c.r);
     let html = `<div class="detail-icon-wrap"><img src="${charmIcon(c)}" alt=""></div>
       <div class="detail-name">${esc(window.ROLL.charmName(c.r))}</div>
-      ${window.ROLL.isGod(c) ? `<div style="text-align:center"><span class="tip-god">God charm</span></div>` : ""}
+      ${window.ROLL.isGod(c) ? `<div style="text-align:center"><span class="tip-god">${esc(godLabel(c))}</span></div>` : ""}
       <div class="detail-section-title">Charm</div>
       ${row("Rarity", c.r)}
       ${row("Roll table", tier.charAt(0).toUpperCase() + tier.slice(1))}
