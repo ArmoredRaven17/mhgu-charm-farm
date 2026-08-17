@@ -134,6 +134,10 @@ window.FARM = (function () {
       base: 12000, mult: 3.2, max: 6, ore: 8 },
     { id: "zenny", name: "Crazy Lucky Cat", levelled: true, desc: "+15% zenny per kill",
       base: 5000, mult: 1.38, max: 12, ore: 5 },
+    // The supply side of the smithy: every other upgrade spends ore, this one earns it.
+    // Named after the MHGU skill that adds reward slots, which is the same idea.
+    { id: "luck", name: "Good Luck", levelled: true, desc: "+1 ore from every hunt",
+      base: 8000, mult: 1.34, max: 12, ore: 4 },
 
     // The two hires. One-offs, priced to be the thing you save for rather than
     // something you drift into: each wants a stack of a G-rank ore, and Ultimas
@@ -179,14 +183,30 @@ window.FARM = (function () {
   // Wider haul has six levels, so at three-per-rung it only ever touched Carbalite
   // and Fucium and stopped. Short upgrades now climb quickly and reach the rare ores;
   // long ones linger, which is right, since you buy far more levels of them.
+  // Superseded by oreRung below; kept only because the tests still assert on it.
   const oreStep = up => Math.min(8, Math.max(1, Math.round(up.max / 8)));
+
+  // Every upgrade walks the WHOLE ladder over its own lifetime: its rung is simply how
+  // far through its levels you are. So level 1 of anything wants Iron Ore and the last
+  // level of anything wants Ultimas Crystal, whatever its cap.
+  //
+  // The old rule gave each upgrade a starting rung and a fixed levels-per-rung, which
+  // left the two ends of the ladder stranded — Iron Ore was asked for by Sharpness's
+  // first eight levels and nothing else ever, while Ultimas Crystal was asked for only
+  // by levels past 80 that no measured session ever reached. An upgrade with fewer
+  // levels than there are ores skips rungs rather than stopping partway up.
+  const oreRung = (up, level) =>
+    Math.min(ORE_LADDER.length - 1, Math.floor(level / up.max * ORE_LADDER.length));
 
   // The quantity climbs every second level. It used to be level/4, which meant the
   // first four levels of anything cost a single ore each — you could buy a row of
   // Palicoes off one hunt's drops.
   function oreCost(up, level) {
-    const idx = Math.min(ORE_LADDER.length - 1,
-      Math.floor(level / oreStep(up)) + Math.floor(up.ore / 2));
+    // A hire is a single purchase, so it has no ladder to walk — it keeps the fixed
+    // rung its `ore` field names.
+    const idx = up.hire
+      ? Math.min(ORE_LADDER.length - 1, Math.floor(up.ore / 2))
+      : oreRung(up, level);
     // oreQty lets a one-off hire ask for a stack rather than the usual single ore.
     const base = up.oreQty || 1;
     return { ore: ORE_LADDER[idx], qty: base + Math.floor(level / 2) };
@@ -254,6 +274,7 @@ window.FARM = (function () {
   const autoClicks = () => lvl("hunters");        // attacks per second
   const dropCount = () => 1 + lvl("drop");
   const zennyMult = () => 1 + lvl("zenny") * 0.15;
+  const oreBonus = () => lvl("luck");             // extra ore on every haul
 
   // Pick the next Brachydios from everything this rank has unlocked.
   function rollVariant() {
@@ -292,14 +313,21 @@ window.FARM = (function () {
   // Ore should be the thing you plan around, not a permanent wall: at 1-3 per kill,
   // simulation had players ore-blocked 100% of the time with six figures of unspent
   // zenny, which is the least interesting failure mode a shop can have.
+  //
+  // Good Luck adds to every haul. It's the only lever that raises TOP-tier supply:
+  // measured against a full set of maxed upgrades, the low ores run a surplus in the
+  // thousands while the four G ores run short by 22 to 280, and no amount of trading
+  // surplus upward closes that — each conversion divides, so a 2,417 Iron surplus is
+  // spent long before it has climbed nine rungs. More ore per kill is the fix.
   function rollOres(v) {
     if (!v.ore) return {};
+    const bonus = lvl("luck");
     if (v.ore === "*G") {
       const got = {};
-      for (const o of ORES.filter(o => o.rank === 2)) got[o.id] = 2 + Math.floor(Math.random() * 3);
+      for (const o of ORES.filter(o => o.rank === 2)) got[o.id] = 2 + Math.floor(Math.random() * 3) + bonus;
       return got;
     }
-    return { [v.ore]: 2 + Math.floor(Math.random() * 3) };
+    return { [v.ore]: 2 + Math.floor(Math.random() * 3) + bonus };
   }
 
   function kill() {
@@ -522,6 +550,6 @@ window.FARM = (function () {
     zennyCost, oreCost,
     get state() { return state; },
     rankIndex, rankName, variant, hpMax, hasSeen, upgradeName,
-    clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, lvl,
+    clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, oreBonus, lvl,
   };
 })();
