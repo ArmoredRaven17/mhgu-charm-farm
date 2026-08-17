@@ -12,8 +12,14 @@ window.FARM = (function () {
 
   // ── The roster ───────────────────────────────────────────────────────────────
   // Two sprites exist as real files: the base Brachydios portrait and Raging
-  // Brachydios (from the save editor). Every ore variant is that same base webp under
-  // a CSS filter, rotating its navy body toward the ore's real icon colour.
+  // Brachydios (from the save editor). Every variant is one of those two under a CSS
+  // filter.
+  //
+  // Low and High rank recolour the base portrait; all five G-rank variants recolour
+  // the Raging one. That isn't decoration — the two sprites start from different
+  // colours, so the same rotation lands somewhere else entirely, and the top of the
+  // ladder reads as a different silhouette rather than another pass over the same
+  // wheel. The tints themselves were chosen by eye in tools/tint-picker.html.
   //
   // rank  — lowest hunter rank that can meet it (0 Low, 1 High, 2 G), taken from
   //         which mining ranks the ore actually appears at in the game.
@@ -32,42 +38,42 @@ window.FARM = (function () {
     // put Dragonite (18) below Fucium (22) — you ended up with more of the high-rank
     // ore than the low-rank one it was supposed to be feeding into.
     { id: "iron", name: "Iron Brachydios", icon: "brachy", theme: "#4a4f57",
-      filter: "saturate(.2) brightness(1.05)",
+      filter: "saturate(0) brightness(0.95)",
       ore: "iron", rank: 0, w: 120, hp: 1.3, shift: 0 },
     { id: "earth", name: "Earth Crystal Brachydios", icon: "brachy", theme: "#8a8f96",
-      filter: "invert(1) hue-rotate(180deg) saturate(.35) brightness(1.05)",
+      filter: "hue-rotate(195deg) saturate(0.35) brightness(2)",
       ore: "earth", rank: 0, w: 104, hp: 1.45, shift: 0 },
     { id: "machalite", name: "Machalite Brachydios", icon: "brachy", theme: "#1e63a8",
-      filter: "hue-rotate(-10deg) saturate(1.5) brightness(1.05)",
+      filter: "hue-rotate(300deg) saturate(1.85) brightness(1.05)",
       ore: "machalite", rank: 0, w: 88, hp: 1.7, shift: 0 },
     { id: "dragonite", name: "Dragonite Brachydios", icon: "brachy", theme: "#2f8f3f",
-      filter: "hue-rotate(-100deg) saturate(1.4)",
+      filter: "hue-rotate(270deg) saturate(1.65) brightness(1.1)",
       ore: "dragonite", rank: 0, w: 68, hp: 2.2, shift: 1 },
 
     { id: "carbalite", name: "Carbalite Brachydios", icon: "brachy", theme: "#6b3fa0",
-      filter: "hue-rotate(60deg) saturate(1.5)",
+      filter: "hue-rotate(30deg) saturate(1.5)",
       ore: "carbalite", rank: 1, w: 46, hp: 2.6, shift: 1 },
     { id: "fucium", name: "Fucium Brachydios", icon: "brachy", theme: "#d15f92",
-      filter: "hue-rotate(112deg) saturate(1.45) brightness(1.5)",
+      filter: "hue-rotate(60deg) saturate(1.5)",
       ore: "fucium", rank: 1, w: 34, hp: 3, shift: 1 },
     { id: "lightcrystal", name: "Lightcrystal Brachydios", icon: "brachy", theme: "#b9c4cc",
-      filter: "saturate(.04) brightness(1.8)",
+      filter: "hue-rotate(135deg) saturate(0.1) brightness(1.9)",
       ore: "lightcrystal", rank: 1, w: 25, hp: 3.4, shift: 1 },
     { id: "firecell", name: "Firecell Brachydios", icon: "brachy", theme: "#e07820",
-      filter: "invert(1) hue-rotate(20deg) saturate(1.6) brightness(1.1)",
+      filter: "hue-rotate(135deg) saturate(3) brightness(0.85)",
       ore: "firecell", rank: 1, w: 18, hp: 4.2, shift: 2 },
 
-    { id: "eltalite", name: "Eltalite Brachydios", icon: "brachy", theme: "#b52020",
-      filter: "hue-rotate(140deg) saturate(1.9)",
+    { id: "eltalite", name: "Eltalite Brachydios", icon: "raging", theme: "#b52020",
+      filter: "hue-rotate(195deg) saturate(3) brightness(0.85)",
       ore: "eltalite", rank: 2, w: 13, hp: 5, shift: 1 },
     { id: "allfire", name: "Allfire Brachydios", icon: "raging", theme: "#6e1010",
-      filter: "saturate(2.2) brightness(.55)",
+      filter: "hue-rotate(240deg) saturate(3) brightness(0.85)",
       ore: "allfire", rank: 2, w: 9, hp: 6.5, shift: 2 },
     { id: "purecrystal", name: "Purecrystal Brachydios", icon: "raging", theme: "#3fa8c8",
-      filter: "hue-rotate(165deg) saturate(1.5) brightness(1.3)",
+      filter: "hue-rotate(120deg) saturate(1.5)",
       ore: "purecrystal", rank: 2, w: 6, hp: 7.5, shift: 2 },
     { id: "ultimas", name: "Ultimas Brachydios", icon: "raging", theme: "#d8b820",
-      filter: "hue-rotate(55deg) saturate(2.2) brightness(1.25)",
+      filter: "hue-rotate(285deg) saturate(1.3) brightness(2)",
       ore: "ultimas", rank: 2, w: 4, hp: 8.5, shift: 2 },
 
     // The only variant with its own artwork, and the rarest thing in the pool.

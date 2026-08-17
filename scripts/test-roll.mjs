@@ -159,7 +159,20 @@ for (const rank of [0, 1, 2]) {
     check(pool[i].w / total <= pool[i - 1].w / total,
       `at rank ${rank}, ${pool[i].name} spawns more often than ${pool[i - 1].name}`);
 }
-check(FARM.VARIANTS.filter(v => v.icon === "raging").length === 1, "expected exactly one Raging variant");
+// Several variants recolour the Raging sprite now, but only one wears it untinted —
+// that one IS Raging Brachydios. And the Raging sprite is reserved for G rank, so the
+// top of the ladder reads as a different silhouette rather than another recolour.
+{
+  const raging = FARM.VARIANTS.filter(v => v.icon === "raging");
+  check(raging.length >= 1, "something should use the Raging sprite");
+  check(raging.filter(v => v.filter === "none").length === 1,
+    "exactly one variant should wear the Raging sprite untinted");
+  check(raging.every(v => v.rank === 2),
+    "the Raging sprite is G rank only: " + raging.filter(v => v.rank !== 2).map(v => v.name).join(", "));
+  const base = FARM.VARIANTS.filter(v => v.icon === "brachy");
+  check(base.filter(v => v.filter === "none").length === 1,
+    "exactly one variant should wear the base sprite untinted");
+}
 console.log(`roster: ${FARM.VARIANTS.length} variants, pools ` +
   [0, 1, 2].map(r => FARM.VARIANTS.filter(v => v.rank <= r).length).join("/"));
 
