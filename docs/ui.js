@@ -109,9 +109,10 @@ window.UI = (function () {
     $("shop").innerHTML = F.UPGRADES.map(up => {
       const level = F.lvl(up.id);
       const maxed = level >= up.max;
+      const label = F.upgradeName(up);      // "Hire a Palico" becomes "Upgrade Palico Gear"
       if (maxed) {
         return `<div class="shop-item maxed">
-          <div class="shop-row"><span class="shop-name">${esc(up.name)}</span>
+          <div class="shop-row"><span class="shop-name">${esc(label)}</span>
             <span class="shop-lv">MAX</span></div>
           <div class="shop-desc">${esc(up.desc)}</div></div>`;
       }
@@ -122,9 +123,9 @@ window.UI = (function () {
       const haveO = (F.state.ores[oc.ore] || 0) >= oc.qty;
       // Explicit label: the button's name is otherwise assembled from nested divs,
       // which screen readers announce as a wall of numbers or not at all.
-      const label = `${up.name}, level ${level}. ${up.desc}. Costs ${z.toLocaleString()} zenny and ${oc.qty} ${ore.name}`;
-      return `<button type="button" class="shop-item" data-buy="${up.id}" aria-label="${esc(label)}">
-        <div class="shop-row"><span class="shop-name">${esc(up.name)}</span>
+      const spoken = `${label}, level ${level}. ${up.desc}. Costs ${z.toLocaleString()} zenny and ${oc.qty} ${ore.name}`;
+      return `<button type="button" class="shop-item" data-buy="${up.id}" aria-label="${esc(spoken)}">
+        <div class="shop-row"><span class="shop-name">${esc(label)}</span>
           <span class="shop-lv">Lv ${level}</span></div>
         <div class="shop-desc">${esc(up.desc)}</div>
         <div class="shop-cost">

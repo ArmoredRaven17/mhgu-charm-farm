@@ -107,13 +107,17 @@ window.FARM = (function () {
       base: 600, mult: 1.26, max: 20, ore: 3 },
     { id: "critdmg", name: "Heavier crits", desc: "+0.25x critical damage",
       base: 1500, mult: 1.28, max: 16, ore: 4 },
-    { id: "dps", name: "Hire a Palico", desc: "+2 damage per second, hands-free",
+    // nameAfter: what the entry is called once you own at least one level. The first
+    // purchase is the hire; everything after it is kitting them out.
+    { id: "dps", name: "Hire a Palico", nameAfter: "Upgrade Palico Gear",
+      desc: "+2 damage per second, hands-free",
       base: 500, mult: 1.21, max: 200, ore: 3 },
     // Distinct from a Palico on purpose: a Palico adds flat damage per second, a
     // hired hunter throws a real attack — so these scale with your click damage and
     // can crit. Late on they're worth far more than raw DPS, which is why they cost
     // more and cap lower.
-    { id: "hunters", name: "Hunters for Hire", desc: "+1 attack per second, using your click damage",
+    { id: "hunters", name: "Hunters for Hire", nameAfter: "Upgrade Hunters for Hire Gear",
+      desc: "+1 attack per second, using your click damage",
       base: 5000, mult: 1.29, max: 40, ore: 6 },
     // The steep 3.2x is deliberate — each level is a flat multiplier on every charm
     // you'll ever get — but the 40,000 base it was raised to in the cost rebalance
@@ -143,6 +147,10 @@ window.FARM = (function () {
       base: 250000, mult: 1, max: 1, ore: 22, oreQty: 10 },
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
+
+  // What an upgrade is called right now. Entries that read as a one-off act — hiring
+  // someone — switch to their ongoing form once you own one.
+  const upgradeName = up => (up.nameAfter && lvl(up.id) > 0) ? up.nameAfter : up.name;
 
   // Which ore a given upgrade level demands, and how many. Levels walk up the ladder
   // so the shop keeps pointing you at whatever you haven't farmed yet.
@@ -497,7 +505,7 @@ window.FARM = (function () {
     nextPurchase,
     zennyCost, oreCost,
     get state() { return state; },
-    rankIndex, rankName, variant, hpMax, hasSeen,
+    rankIndex, rankName, variant, hpMax, hasSeen, upgradeName,
     clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, lvl,
   };
 })();
