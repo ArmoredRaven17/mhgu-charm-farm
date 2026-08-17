@@ -362,6 +362,30 @@ window.FARM = (function () {
     return need;
   }
 
+  // What to buy next, as one shared answer for Kokoto Gal and the simulation. Having
+  // both reach for the same function means the economy the simulation measures is the
+  // one the game actually plays, rather than two greedy loops that drift apart.
+  //
+  // Policy: clear a rung of the ore ladder before climbing to the next. Buying the
+  // globally cheapest thing instead — the old behaviour in both places — meant a
+  // levelled-up line kept winning on price while everything still sitting on Iron Ore
+  // went untouched, so cheap ores piled up unspent while you starved for rare ones.
+  // Within a rung it still takes the cheapest, so progress inside a tier stays smooth.
+  function nextPurchase() {
+    let best = null;
+    for (const up of UPGRADES) {
+      const level = lvl(up.id);
+      if (level >= up.max) continue;
+      if (canBuy(up.id)) continue;                    // returns a reason when you can't
+      const rung = ORE_LADDER.indexOf(oreCost(up, level).ore);
+      const cost = zennyCost(up, level);
+      if (!best || rung < best.rung || (rung === best.rung && cost < best.cost)) {
+        best = { up, level, rung, cost };
+      }
+    }
+    return best;
+  }
+
   function sellOre(id, qty) {
     const have = state.ores[id] || 0;
     const n = Math.min(have, qty === undefined ? have : qty);
@@ -470,6 +494,7 @@ window.FARM = (function () {
   return {
     VARIANTS, RANKS, UPGRADES, ORES, oreById, variantById, ORE_LADDER,
     init, reset, click, hit, buy, canBuy, sellOre, oresStillNeeded, spawn, catchUp, avgHit,
+    nextPurchase,
     zennyCost, oreCost,
     get state() { return state; },
     rankIndex, rankName, variant, hpMax, hasSeen,

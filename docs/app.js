@@ -344,17 +344,15 @@
         if (earned) argosyEarned += earned;
       }
 
-      // Kokoto Gal spends for you. Buys the cheapest affordable upgrade repeatedly —
-      // the bound is belt-and-braces: every purchase raises its own next cost, so the
-      // loop terminates on its own, but a runaway here would freeze the tab.
+      // Kokoto Gal spends for you, clearing a rung of the ore ladder before climbing
+      // to the next — see FARM.nextPurchase, which the simulation uses too. The bound
+      // is belt-and-braces: every purchase raises its own next cost, so the loop
+      // terminates on its own, but a runaway here would freeze the tab.
       if (FARM.lvl("kokoto") > 0 && state.kokotoActive) {
         for (let i = 0; i < 40; i++) {
-          const pick = FARM.UPGRADES
-            .map(u => ({ u, lv: FARM.lvl(u.id) }))
-            .filter(o => o.lv < o.u.max && !FARM.canBuy(o.u.id))
-            .sort((a, b) => FARM.zennyCost(a.u, a.lv) - FARM.zennyCost(b.u, b.lv))[0];
+          const pick = FARM.nextPurchase();
           if (!pick) break;
-          FARM.buy(pick.u.id);
+          FARM.buy(pick.up.id);
         }
       }
       // First of its kind: its theme is now yours, so rebuild the picker. Tracked even

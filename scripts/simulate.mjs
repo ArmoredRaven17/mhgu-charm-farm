@@ -129,25 +129,25 @@ function runProfile(profile, seed) {
     }
 
     // ── Buy ───────────────────────────────────────────────────────────────────
-    // Greedy: keep buying the cheapest thing you can afford. Simple, and close to
-    // how people actually play an idle game.
+    // Uses FARM.nextPurchase — the same policy Kokoto Gal follows in the app, so this
+    // measures the real buyer rather than a second implementation of one. It clears a
+    // rung of the ore ladder before climbing, taking the cheapest option within a rung,
+    // so cheap upgrades keep flowing without starving the expensive ones.
     let bought = true, blockedByOreOnly = false;
     while (bought) {
       bought = false;
       const options = FARM.UPGRADES
         .map(u => ({ u, lv: FARM.lvl(u.id), why: FARM.canBuy(u.id) }))
         .filter(o => o.lv < o.u.max);
-      const affordable = options.filter(o => !o.why)
-        .sort((a, b) => FARM.zennyCost(a.u, a.lv) - FARM.zennyCost(b.u, b.lv));
-      if (affordable.length) {
-        const pick = affordable[0];
-        FARM.buy(pick.u.id);
+      const pick = FARM.nextPurchase();
+      if (pick) {
+        FARM.buy(pick.up.id);
         bought = true;
         buyTimes.push(t);
-        const lv = FARM.lvl(pick.u.id);
-        if (firstBuy[pick.u.id] === undefined) firstBuy[pick.u.id] = t;
-        levelAt[pick.u.id] = levelAt[pick.u.id] || {};
-        for (const m of [5, 10, 25]) if (lv === m) levelAt[pick.u.id][m] = t;
+        const lv = FARM.lvl(pick.up.id);
+        if (firstBuy[pick.up.id] === undefined) firstBuy[pick.up.id] = t;
+        levelAt[pick.up.id] = levelAt[pick.up.id] || {};
+        for (const m of [5, 10, 25]) if (lv === m) levelAt[pick.up.id][m] = t;
       } else if (options.length) {
         // Classify what's actually holding you back. `canBuy` returns "Need 400z and
         // 1x Earth Crystal", so the two halves of the sentence say which resource is
