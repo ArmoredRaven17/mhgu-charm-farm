@@ -68,7 +68,10 @@ function runProfile(profile, seed) {
   const times = {};             // milestone -> second reached
   const firstBuy = {};          // upgrade id -> second of first purchase
   const levelAt = {};           // upgrade id -> {5: sec, 10: sec, 25: sec}
-  let oreStarvedSeconds = 0;    // seconds where the cheapest upgrade was blocked ONLY by ore
+  let oreStarvedSeconds = 0;    // seconds blocked only by ore
+  let zennyBlocked = 0;         // seconds blocked only by zenny
+  let bothBlocked = 0;          // seconds where neither resource was enough
+  let bankRatioSum = 0, bankRatioN = 0;   // banked zenny ÷ cheapest thing you can't buy
 
   const mark = (key, t) => { if (times[key] === undefined) times[key] = t; };
 
@@ -141,11 +144,20 @@ function runProfile(profile, seed) {
         if (firstBuy[pick.u.id] === undefined) firstBuy[pick.u.id] = t;
         levelAt[pick.u.id] = levelAt[pick.u.id] || {};
         for (const m of [5, 10, 25]) if (lv === m) levelAt[pick.u.id][m] = t;
-      } else {
-        // Would anything be affordable if ore weren't a factor? If so, ore is the
-        // thing holding this second back, not zenny.
-        blockedByOreOnly = options.some(o =>
-          o.why && !o.why.includes("z") && o.why.includes("x "));
+      } else if (options.length) {
+        // Classify what's actually holding you back. `canBuy` returns "Need 400z and
+        // 1x Earth Crystal", so the two halves of the sentence say which resource is
+        // short. A healthy economy blocks on both at different times; blocking on one
+        // forever means the other has stopped mattering.
+        const reasons = options.map(o => o.why || "");
+        const zennyOnly = reasons.some(w => /\dz/.test(w) && !/x /.test(w));
+        const oreOnly = reasons.some(w => /x /.test(w) && !/\dz/.test(w));
+        if (zennyOnly && !oreOnly) zennyBlocked++;
+        else if (oreOnly && !zennyOnly) blockedByOreOnly = true;
+        else if (zennyOnly && oreOnly) bothBlocked++;
+        // Cheapest thing you can't afford, against what you're holding.
+        const cheapest = Math.min(...options.map(o => FARM.zennyCost(o.u, o.lv)));
+        if (cheapest > 0) bankRatioSum += FARM.state.zenny / cheapest, bankRatioN++;
       }
     }
     if (blockedByOreOnly) oreStarvedSeconds++;
@@ -170,6 +182,10 @@ function runProfile(profile, seed) {
     boxHeld: box.length,
     sold, soldZenny, lostToFullBox,
     oreStarvedPct: Math.round((oreStarvedSeconds / SECONDS) * 100),
+    zennyBlockedPct: Math.round((zennyBlocked / SECONDS) * 100),
+    bothBlockedPct: Math.round((bothBlocked / SECONDS) * 100),
+    // >>1 means you're sitting on far more money than the next purchase needs.
+    bankRatio: bankRatioN ? Math.round(bankRatioSum / bankRatioN) : 0,
     times, firstBuy, levelAt, variantKills, oreGained,
     // Pacing: how often a purchase actually lands, and the worst dry spell.
     buys: buyTimes.length,
@@ -203,7 +219,8 @@ for (const p of PROFILES) {
   console.log(`   click ${r.clickDamage} · palico ${r.dps}/s · hunters ${r.autoClicks}/s`);
   console.log(`   sold ${r.sold.toLocaleString()} charms for ${r.soldZenny.toLocaleString()}z` +
     (r.lostToFullBox ? ` · lost ${r.lostToFullBox} to a full box` : ""));
-  console.log(`   ore-starved ${r.oreStarvedPct}% of seconds`);
+  console.log(`   blocked by: ore ${r.oreStarvedPct}% · zenny ${r.zennyBlockedPct}% · both ${r.bothBlockedPct}%` +
+    `  ·  bank is ${r.bankRatio}x the next thing you can't afford`);
   console.log(`   milestones: ` + WATCH.map(w => `${w.label} ${fmt(r.times[w.key])}`).join(" · "));
   console.log(`   upgrades:`);
   for (const u of FARM.UPGRADES) {

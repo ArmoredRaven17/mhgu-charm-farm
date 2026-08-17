@@ -102,36 +102,36 @@ window.FARM = (function () {
     // that low, and without it the most common drop in the game would never be asked
     // for by anything.
     { id: "dmg", name: "Sharper strikes", desc: "+1 damage per click",
-      base: 25, mult: 1.15, max: 999, ore: 0 },
+      base: 100, mult: 1.20, max: 999, ore: 0 },
     { id: "crit", name: "Keener eye", desc: "+2% critical chance",
-      base: 150, mult: 1.22, max: 20, ore: 3 },
+      base: 600, mult: 1.26, max: 20, ore: 3 },
     { id: "critdmg", name: "Heavier crits", desc: "+0.25x critical damage",
-      base: 400, mult: 1.25, max: 16, ore: 4 },
+      base: 1500, mult: 1.28, max: 16, ore: 4 },
     { id: "dps", name: "Hire a Palico", desc: "+2 damage per second, hands-free",
-      base: 200, mult: 1.18, max: 200, ore: 3 },
+      base: 500, mult: 1.21, max: 200, ore: 3 },
     // Distinct from a Palico on purpose: a Palico adds flat damage per second, a
     // hired hunter throws a real attack — so these scale with your click damage and
     // can crit. Late on they're worth far more than raw DPS, which is why they cost
     // more and cap lower.
     { id: "hunters", name: "Hunters for Hire", desc: "+1 attack per second, using your click damage",
-      base: 2500, mult: 1.28, max: 40, ore: 6 },
+      base: 5000, mult: 1.29, max: 40, ore: 6 },
     { id: "drop", name: "Wider haul", desc: "+1 charm per kill",
-      base: 5000, mult: 3.2, max: 6, ore: 8 },
+      base: 40000, mult: 3.2, max: 6, ore: 8 },
     { id: "zenny", name: "Better appraisal", desc: "+15% zenny per kill",
-      base: 1200, mult: 1.35, max: 12, ore: 5 },
+      base: 5000, mult: 1.38, max: 12, ore: 5 },
 
     // The two hires. One-offs, priced to be the thing you save for rather than
     // something you drift into: each wants a stack of a G-rank ore, and Ultimas
     // Crystal is the rarest drop in the game.
     { id: "maximeld", name: "Maximeld XIV", desc: "Loads the Melding Pot for you after every hunt",
-      base: 400000, mult: 1, max: 1, ore: 16, oreQty: 15 },
+      base: 60000, mult: 1, max: 1, ore: 16, oreQty: 15 },
     { id: "argosy", name: "Argosy Captain", desc: "Sells ore no upgrade still needs, plus any surplus",
-      base: 800000, mult: 1, max: 1, ore: 20, oreQty: 12 },
+      base: 120000, mult: 1, max: 1, ore: 20, oreQty: 12 },
     // 10 Ultimas rather than 20: the ore ladder caps at Ultimas Crystal, so the late
     // levels of every other upgrade are competing for the same drop. At 20 the
     // simulation never once managed to bank enough, in any profile.
     { id: "kokoto", name: "Kokoto Gal", desc: "Spends your zenny and ore on upgrades for you",
-      base: 1500000, mult: 1, max: 1, ore: 22, oreQty: 10 },
+      base: 250000, mult: 1, max: 1, ore: 22, oreQty: 10 },
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
 
@@ -145,7 +145,7 @@ window.FARM = (function () {
     const idx = Math.min(ORE_LADDER.length - 1, Math.floor(level / 3) + Math.floor(up.ore / 2));
     // oreQty lets a one-off hire ask for a stack rather than the usual single ore.
     const base = up.oreQty || 1;
-    return { ore: ORE_LADDER[idx], qty: base + Math.floor(level / 3) };
+    return { ore: ORE_LADDER[idx], qty: base + Math.floor(level / 2) };
   }
   function zennyCost(up, level) {
     return Math.round(up.base * Math.pow(up.mult, level));
@@ -268,7 +268,7 @@ window.FARM = (function () {
     const firstOfItsKind = !state.seen[v.id];
     state.seen[v.id] = true;
     state.kills++;
-    const pay = Math.round(worth * 0.55 * zennyMult());
+    const pay = Math.round(worth * 0.38 * zennyMult());
     state.zenny += pay;
 
     const ores = rollOres(v);
