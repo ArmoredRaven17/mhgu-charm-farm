@@ -278,7 +278,7 @@
       `hunt${summary.kills === 1 ? "" : "s"} and ${summary.zenny.toLocaleString()}z.`;
     if (away > MAX_OFFLINE_HOURS * 3600) msg += ` (Capped at ${MAX_OFFLINE_HOURS} hours.)`;
     if (offlineGod) {
-      msg += ` One of them dropped a god charm, after ${offlineGodHunts.toLocaleString()} ` +
+      msg += ` One of them dropped a god charm, at ${offlineGodHunts.toLocaleString()} ` +
         `hunt${offlineGodHunts === 1 ? "" : "s"}.`;
     }
     toast(msg, offlineGod ? 9000 : 6000);
@@ -371,22 +371,16 @@
       // A god charm outranks every other thing the hunt could tell you about. Worth
       // surfacing even from an offline haul, so it's recorded rather than skipped.
       const god = res.charms.find(ROLL.isGod) || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
-      let sinceLastGod = 0;
-      if (god) {
-        // The drought this one ended — hunts since the previous god charm, or since
-        // the very first hunt if this is your first. Measured here rather than at
-        // report time so an offline haul that produced one still counts correctly.
-        sinceLastGod = FARM.state.kills - (FARM.state.lastGodAt || 0);
-        FARM.state.lastGodAt = FARM.state.kills;
-        offlineGod = god;
-        offlineGodHunts = sinceLastGod;
-      }
+      // Your hunt count when it fell — read here rather than when the message is
+      // built, so one that drops during a replayed absence still reports the right
+      // figure instead of the total after the whole catch-up.
+      const godAt = god ? FARM.state.kills : 0;
+      if (god) { offlineGod = god; offlineGodHunts = godAt; }
       if (quiet) return;                 // the rest is painting and toasts
 
       if (god) {
-        const n = sinceLastGod.toLocaleString();
         toast(`God charm! A ${ROLL.charmName(god.r)} with three slots and both skills maxed — ` +
-          `after ${n} hunt${sinceLastGod === 1 ? "" : "s"}.`, 9000);
+          `at ${godAt.toLocaleString()} hunt${godAt === 1 ? "" : "s"}.`, 9000);
       } else if (placed < res.charms.length) {
         const lost = res.charms.length - placed;
         toast(`Box full — ${lost} charm${lost === 1 ? "" : "s"} lost. Sell or meld something.`, 3600);
