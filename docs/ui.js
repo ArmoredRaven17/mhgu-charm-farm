@@ -551,14 +551,9 @@ window.UI = (function () {
           (spared ? ` ${spared} god charm${spared === 1 ? " is" : "s are"} kept.` : ""), doIt);
       } else doIt();
     });
-    $("emptyBoxBtn").addEventListener("click", () => {
-      const n = window.BOX.count();
-      if (!n) return toast("The box is already empty.");
-      const doIt = () => { window.BOX.emptyBox(); selected = -1; renderAll(); toast("Box emptied."); };
-      if (confirmBulk) hooks.confirm("Empty the box?", `This throws away ${n} charm${n === 1 ? "" : "s"} without selling them.`, doIt);
-      else doIt();
-    });
-
+    // No Empty Box control. It only ever destroyed charms without paying for them,
+    // and Sell Junk does the same job while giving you the zenny. Reset Run still
+    // clears the box, which is the one place wiping it is actually the intent.
     $("autoFillBtn").addEventListener("click", () => {
       const n = window.BOX.autoFill();
       toast(n ? `Filled ${n} row${n === 1 ? "" : "s"}.` : "No rarity has three spare charms.");
