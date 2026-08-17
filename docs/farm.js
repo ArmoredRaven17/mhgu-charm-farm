@@ -150,13 +150,16 @@ window.FARM = (function () {
 
   // What an upgrade is called right now.
   //   levelled  — named after a real MHGU skill, so it reads with its rank the way the
-  //               game writes one: "Sharpness +5". The shop drops its separate level
-  //               badge for these, since the name already carries it.
+  //               game writes one: "Sharpness +5". Ranks start at +1; at zero the name
+  //               stands alone, because there is no such thing as Sharpness +0 — you
+  //               simply don't have the skill yet. The shop drops its separate level
+  //               badge for these either way, since the name carries the rank.
   //   nameAfter — entries that read as a one-off act (hiring someone) switch to their
   //               ongoing form once you own one.
   function upgradeName(up) {
-    if (up.levelled) return `${up.name} +${lvl(up.id)}`;
-    return (up.nameAfter && lvl(up.id) > 0) ? up.nameAfter : up.name;
+    const level = lvl(up.id);
+    if (up.levelled) return level > 0 ? `${up.name} +${level}` : up.name;
+    return (up.nameAfter && level > 0) ? up.nameAfter : up.name;
   }
 
   // Which ore a given upgrade level demands, and how many. Levels walk up the ladder
