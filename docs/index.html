@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
 <div id="app">
@@ -28,8 +28,10 @@
 
   <div class="farm-layout">
 
-    <!-- The monster and your ore — both stay in view while the smithy scrolls -->
+    <!-- The monster and your ore are docked to the top of the column and stay put
+         while the smithy scrolls beneath them — you're reading both while you shop. -->
     <aside class="farm-col arena-col">
+      <div class="arena-dock">
       <div class="arena">
         <div class="arena-name" id="arenaName">Brachydios</div>
         <div class="arena-rank" id="arenaRank">Low Rank · 0 hunts</div>
@@ -45,14 +47,11 @@
         </div>
       </div>
 
-      <!-- Ore stays with the monster it came from, and stays put while the smithy
-           beside it scrolls — it's what you're checking as you shop. -->
+      <!-- Ore stays with the monster it came from — it's what you check as you shop. -->
       <div class="panel-title">Ore stock</div>
       <div class="ore-strip" id="oreStrip"></div>
-    </aside>
+      </div>
 
-    <!-- Upgrades in their own column, so a long shop never scrolls the arena away -->
-    <aside class="farm-col smithy-col">
       <div class="panel-title">Smithy</div>
       <div class="shop" id="shop"></div>
     </aside>

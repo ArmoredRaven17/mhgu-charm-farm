@@ -109,14 +109,25 @@ kbd{
    compresses each child to make them fit instead — which squashed the pot's status
    line to two lines and let its text spill over the slots below it. Let the children
    keep their natural height and let the column scroll. */
-.arena-col > *,.smithy-col > *,.pot-col > *{flex-shrink:0}
-/* The arena holds the monster and your ore — both things you want in view while
-   shopping — and the smithy scrolls independently beside it, so a long upgrade list
-   never pushes the Brachydios off screen. */
-.arena-col{flex:0 0 264px;border-right:1px solid var(--line);overflow-y:auto}
-.smithy-col{flex:0 0 290px;border-right:1px solid var(--line);overflow-y:auto}
+.arena-col > *,.pot-col > *{flex-shrink:0}
+
+/* The monster and your ore ride at the top of the column while the smithy scrolls
+   under them. Same deal as the talisman dock: its own opaque background, because a
+   transparent sticky element would let the shop rows show through, and a height cap
+   with its own scroll so a tall arena can't bury the shop on a short window. */
+.arena-dock{
+  position:sticky;top:0;z-index:5;
+  max-height:64%;overflow-y:auto;
+  background-color:var(--panel-bg);
+  background-image:
+    linear-gradient(color-mix(in srgb,var(--panel-bg) 90%,transparent),color-mix(in srgb,var(--panel-bg) 90%,transparent)),
+    url('assets/rockyTextureDark2.png');
+  background-repeat:repeat;background-size:auto,200px 200px;
+  box-shadow:0 8px 12px -8px rgba(0,0,0,.75)
+}
+.arena-col{flex:0 0 300px;border-right:1px solid var(--line);overflow-y:auto}
 .pot-col{flex:0 0 300px;border-left:1px solid var(--line);overflow-y:auto}
-.arena-col,.smithy-col,.pot-col{
+.arena-col,.pot-col{
   background-color:var(--panel-bg);
   background-image:
     linear-gradient(color-mix(in srgb,var(--panel-bg) 90%,transparent),color-mix(in srgb,var(--panel-bg) 90%,transparent)),
@@ -538,10 +549,12 @@ kbd{
 .restore-banner{z-index:30;display:flex;align-items:center;gap:10px}
 .toast{z-index:40;background:#222;max-width:min(520px,90vw);text-align:center}
 
-/* Four fixed columns plus the grid need more room than three did. */
-@media (max-width:1240px){
+@media (max-width:1100px){
   .farm-layout{flex-direction:column;overflow-y:auto}
-  .arena-col,.smithy-col,.pot-col{flex:none;width:auto;border:none;border-bottom:1px solid var(--line)}
+  .arena-col,.pot-col{flex:none;width:auto;border:none;border-bottom:1px solid var(--line)}
+  /* Stacked, the column no longer scrolls on its own, so there is nothing to stick
+     to — pinning here would just freeze a panel mid-page. */
+  .arena-dock,.detail-dock{position:static;max-height:none;box-shadow:none}
   .box-col{flex:none}
   .box-grid-area{overflow:visible;padding:10px}
   /* Stacked, the grid area has no height of its own to measure against, so
