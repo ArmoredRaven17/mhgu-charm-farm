@@ -101,11 +101,11 @@ window.FARM = (function () {
     // ore:0 puts this at the bottom of the ladder — Iron Ore. Nothing else starts
     // that low, and without it the most common drop in the game would never be asked
     // for by anything.
-    { id: "dmg", name: "Sharper strikes", desc: "+1 damage per click",
+    { id: "dmg", name: "Sharpness", levelled: true, desc: "+1 damage per click",
       base: 100, mult: 1.20, max: 999, ore: 0 },
-    { id: "crit", name: "Keener eye", desc: "+2% critical chance",
+    { id: "crit", name: "Critical Eye", levelled: true, desc: "+2% critical chance",
       base: 600, mult: 1.26, max: 20, ore: 3 },
-    { id: "critdmg", name: "Heavier crits", desc: "+0.25x critical damage",
+    { id: "critdmg", name: "Crit Boost", levelled: true, desc: "+0.25x critical damage",
       base: 1500, mult: 1.28, max: 16, ore: 4 },
     // nameAfter: what the entry is called once you own at least one level. The first
     // purchase is the hire; everything after it is kitting them out.
@@ -124,9 +124,9 @@ window.FARM = (function () {
     // was never checked on its own, and it locked a light player out of level one
     // entirely across a whole session. The steepness is what makes it a long goal;
     // the base only decides whether you can start.
-    { id: "drop", name: "Wider haul", desc: "+1 charm per kill",
+    { id: "drop", name: "Charm Chaser", levelled: true, desc: "+1 charm per kill",
       base: 12000, mult: 3.2, max: 6, ore: 8 },
-    { id: "zenny", name: "Better appraisal", desc: "+15% zenny per kill",
+    { id: "zenny", name: "Crazy Lucky Cat", levelled: true, desc: "+15% zenny per kill",
       base: 5000, mult: 1.38, max: 12, ore: 5 },
 
     // The two hires. One-offs, priced to be the thing you save for rather than
@@ -148,9 +148,16 @@ window.FARM = (function () {
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
 
-  // What an upgrade is called right now. Entries that read as a one-off act — hiring
-  // someone — switch to their ongoing form once you own one.
-  const upgradeName = up => (up.nameAfter && lvl(up.id) > 0) ? up.nameAfter : up.name;
+  // What an upgrade is called right now.
+  //   levelled  — named after a real MHGU skill, so it reads with its rank the way the
+  //               game writes one: "Sharpness +5". The shop drops its separate level
+  //               badge for these, since the name already carries it.
+  //   nameAfter — entries that read as a one-off act (hiring someone) switch to their
+  //               ongoing form once you own one.
+  function upgradeName(up) {
+    if (up.levelled) return `${up.name} +${lvl(up.id)}`;
+    return (up.nameAfter && lvl(up.id) > 0) ? up.nameAfter : up.name;
+  }
 
   // Which ore a given upgrade level demands, and how many. Levels walk up the ladder
   // so the shop keeps pointing you at whatever you haven't farmed yet.

@@ -124,9 +124,11 @@ window.UI = (function () {
       // Explicit label: the button's name is otherwise assembled from nested divs,
       // which screen readers announce as a wall of numbers or not at all.
       const spoken = `${label}, level ${level}. ${up.desc}. Costs ${z.toLocaleString()} zenny and ${oc.qty} ${ore.name}`;
+      // A skill-named entry already reads "Sharpness +5"; a second "Lv 5" beside it is
+      // the same fact twice.
+      const badge = up.levelled ? "" : `<span class="shop-lv">Lv ${level}</span>`;
       return `<button type="button" class="shop-item" data-buy="${up.id}" aria-label="${esc(spoken)}">
-        <div class="shop-row"><span class="shop-name">${esc(label)}</span>
-          <span class="shop-lv">Lv ${level}</span></div>
+        <div class="shop-row"><span class="shop-name">${esc(label)}</span>${badge}</div>
         <div class="shop-desc">${esc(up.desc)}</div>
         <div class="shop-cost">
           <span class="${haveZ ? "afford" : "short"}">${z.toLocaleString()}z</span>
