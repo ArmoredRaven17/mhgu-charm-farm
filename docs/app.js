@@ -286,7 +286,7 @@
     if (offlineGod) {
       msg += ` God Charm #${offlineGodNumber} at ${offlineGodHunts.toLocaleString()} hunts.`;
     }
-    toast(msg, offlineGod ? 9000 : 6000);
+    toast(msg, offlineGod ? 9000 : 6000, true);
   }
 
   function markRunDirty() {
@@ -364,7 +364,7 @@
       if (unlocked && !quiet) {
         buildSwatches();
         applyTheme(currentTheme);        // reapplies the `sel` marker to the new tiles
-        toast(`${res.variant.name} hunted — its theme is unlocked.`, 4000);
+        toast(`${res.variant.name} hunted — its theme is unlocked.`, 4000, true);
       }
 
       // A god charm outranks every other thing the hunt could tell you about. Worth
@@ -382,10 +382,10 @@
       if (quiet) return;                 // the rest is painting and toasts
 
       if (god) {
-        toast(`God Charm #${godNumber} at ${godAt.toLocaleString()} hunts.`, 9000);
+        toast(`God Charm #${godNumber} at ${godAt.toLocaleString()} hunts.`, 9000, true);
       } else if (placed < res.charms.length) {
         const lost = res.charms.length - placed;
-        toast(`Box full — ${lost} charm${lost === 1 ? "" : "s"} lost. Sell or meld something.`, 3600);
+        toast(`Box full — ${lost} charm${lost === 1 ? "" : "s"} lost. Sell or meld something.`, 3600, true);
       } else if (meld) {
         toast(`The pot returned a ${ROLL.charmName(meld.charm.r)}.`);
       }

@@ -32,12 +32,34 @@ window.UI = (function () {
   let cells = [];           // the 100 cell divs, built once and repainted in place
 
   // ── Toast ────────────────────────────────────────────────────────────────────
-  function toast(msg, ms) {
+  // There is one toast slot and, late on, several kills a second — each of which may
+  // want to say something. Two rules keep that readable:
+  //
+  //   important  holds the slot for its full life; nothing routine may displace it.
+  //              A god charm was being overwritten within milliseconds of appearing.
+  //   routine    at most one per ROUTINE_GAP, since a message replaced 28 times a
+  //              second is a flicker rather than information.
+  //
+  // Another important message may still replace an important one — the newer event is
+  // the one worth reading.
+  const ROUTINE_GAP = 1200;
+  let holdUntil = 0;        // an important message owns the slot until this time
+  let lastRoutine = 0;
+
+  function toast(msg, ms, important) {
+    const now = Date.now();
+    if (!important) {
+      if (now < holdUntil) return;              // something important is speaking
+      if (now - lastRoutine < ROUTINE_GAP) return;
+      lastRoutine = now;
+    }
     const el = $("toast");
     el.textContent = msg;
     el.classList.remove("hidden");
     if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.add("hidden"), ms || 2600);
+    const life = ms || 2600;
+    holdUntil = important ? now + life : 0;
+    toastTimer = setTimeout(() => { el.classList.add("hidden"); holdUntil = 0; }, life);
   }
 
   // ── Arena ────────────────────────────────────────────────────────────────────
