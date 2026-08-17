@@ -163,11 +163,16 @@ window.ROLL = (function () {
 
   // Zenny appraisal. Rarity dominates, slots are worth real money, and only the net
   // positive skill points count — a charm whose second skill is -10 is worth less.
+  //
+  // These coefficients were quartered after simulation: at the old rate a two-hour
+  // run sold ~11,500 charms for ~21 million zenny, which drowned every price in the
+  // shop and left money meaningless while ore did all the gating. A charm should be
+  // worth picking up, not fund the whole farm.
   function charmValue(c) {
     if (!c) return 0;
     let net = 0;
     for (const s of c.k || []) net += s[1];
-    return Math.max(1, Math.round(c.r * c.r * 30 + c.s * 400 + Math.max(0, net) * 60));
+    return Math.max(1, Math.round(c.r * c.r * 8 + c.s * 120 + Math.max(0, net) * 20));
   }
 
   // The pot takes three charms of the SAME rarity and returns one a rarity HIGHER.

@@ -15,29 +15,22 @@
   const toast = UI.toast;
 
   // ── Theme ──────────────────────────────────────────────────────────────
-  // Same palette as the rest of the family, so the apps sit together.
-  const THEME_COLORS = [
-    ["Teostra", "#570B0B"], ["Rathalos", "#b51717"],
-    ["Tetsucabra", "#c65900"], ["Agnaktor", "#fc933e"],
-    ["Tigrex", "#C8A319"], ["Rajang", "#f1d364"],
-    ["Deviljho", "#0B570F"], ["Rathian", "#3a9b3f"],
-    ["Astalos", "#14503d"], ["Zinogre", "#2dae85"],
-    ["Zamtrios", "#005984"], ["Plesioth", "#0080c1"],
-    ["Brachydios", "#0B2757"], ["Lagiacrus", "#0b3f97"],
-    ["G. Magala", "#1F0B57", "Gore Magala"], ["Nerscylla", "#4e2fa2"],
-    ["Y. Garuga", "#62008f", "Yian Garuga"], ["Chameleos", "#8e50ab"],
-    ["Mizutsune", "#D84696"], ["Congalala", "#ce79a8"],
-    ["Duramboros", "#5a411f"], ["Diablos", "#997c54"],
-    ["Barroth", "#B57C45"], ["Bulldrome", "#cfaa87"],
-    ["K. Daora", "#505358", "Kushala Daora"], ["Valstrax", "#aeb5c1"],
-    ["Forbidden", "#1E2025", "Question Mark"],
-  ];
-  // Brachydios, because he's the one you're hitting.
+  // The palette IS the roster: one theme per Brachydios variant, coloured after the
+  // ore it wears. The other apps in the family pick their themes from monsters
+  // generally; this one only ever fights the one monster, so its swatches are the
+  // fourteen coats you'll actually meet, each showing the sprite under its own tint.
+  const SPRITES = {
+    brachy: "assets/MonsterIcons/MHGU-Brachydios_Icon.webp",
+    raging: "assets/MonsterIcons/MHGU-Raging_Brachydios_Icon.webp",
+  };
+  const THEME_VARIANTS = FARM.VARIANTS.filter(v => v.theme);
+  const BY_HEX = Object.fromEntries(THEME_VARIANTS.map(v => [v.theme.toUpperCase(), v]));
+  // Brachydios, because he's the one you start on.
   const DEFAULT_THEME = "#0B2757";
-  const COLORS_HEX = Object.fromEntries(THEME_COLORS.map(([name, hex]) => [hex.toUpperCase(), name]));
-  const COLORS_ICON = Object.fromEntries(THEME_COLORS.filter(c => c[2]).map(([name, , icon]) => [name, icon]));
-  const FALLBACK_ICON = "assets/MonsterIcons/MHGU-Question_Mark_Icon.webp";
-  const monsterIcon = name => name ? "assets/MonsterIcons/MHGU-" + name.replace(/ /g, "_") + "_Icon.webp" : FALLBACK_ICON;
+  // The swatch caption drops the shared surname — fourteen tiles all ending in
+  // "Brachydios" would just be fourteen copies of the same word.
+  const shortName = v => v.id === "base" ? "Brachydios"
+    : v.name.replace(/ Brachydios$/, "").replace(/^Raging$/, "Raging");
 
   const hexRgb = h => { h = h.replace("#", ""); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); };
   const clamp = n => Math.max(0, Math.min(255, Math.round(n)));
@@ -80,23 +73,30 @@
     r.setProperty("--accent-hover", cssRgb(lighten(c, .4)));
     try { localStorage.setItem(THEME_KEY, hex); } catch (e) {}
     document.querySelectorAll(".swatch").forEach(s => s.classList.toggle("sel", s.dataset.hex === hex));
+    // The titlebar shows whichever Brachydios you themed the app after, wearing the
+    // same tint the arena would give it.
     const titleIcon = document.querySelector(".title-icon");
-    if (titleIcon) {
-      const name = COLORS_HEX[hex.toUpperCase()];
-      titleIcon.src = name ? monsterIcon(COLORS_ICON[name] || name) : FALLBACK_ICON;
+    const v = BY_HEX[hex.toUpperCase()];
+    if (titleIcon && v) {
+      titleIcon.src = SPRITES[v.icon];
+      titleIcon.style.filter = v.filter === "none" ? "" : v.filter;
+      titleIcon.alt = v.name;
+      titleIcon.title = v.name;
     }
   }
   function buildSwatches() {
     const wrap = $("swatches");
     wrap.innerHTML = "";
-    for (const [name, hex, iconOverride] of THEME_COLORS) {
+    for (const v of THEME_VARIANTS) {
       const d = document.createElement("div");
       d.className = "swatch";
-      d.dataset.hex = hex;
-      d.style.background = hex;
-      d.title = name;
-      d.innerHTML = `<img class="swatch-icon" src="${monsterIcon(iconOverride || name)}" alt=""><span>${name}</span>`;
-      d.addEventListener("click", () => applyTheme(hex));
+      d.dataset.hex = v.theme;
+      d.style.background = v.theme;
+      d.title = v.name;
+      const filter = v.filter === "none" ? "" : `filter:${v.filter}`;
+      d.innerHTML = `<img class="swatch-icon" src="${SPRITES[v.icon]}" alt="" style="${filter}">` +
+        `<span>${UI.esc(shortName(v))}</span>`;
+      d.addEventListener("click", () => applyTheme(v.theme));
       wrap.appendChild(d);
     }
   }
@@ -191,7 +191,11 @@
   // ── Boot ───────────────────────────────────────────────────────────────
   buildSwatches();
   applyTheme((() => {
-    try { return localStorage.getItem(THEME_KEY) || DEFAULT_THEME; } catch (e) { return DEFAULT_THEME; }
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+    // A hex from the old monster palette won't match any Brachydios, and would leave
+    // the picker with nothing selected — fall back rather than show a phantom theme.
+    return saved && BY_HEX[saved.toUpperCase()] ? saved : DEFAULT_THEME;
   })());
 
   const settings = BOX.readSettings();

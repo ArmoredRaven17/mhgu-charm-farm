@@ -24,55 +24,55 @@ window.FARM = (function () {
   // This array is the entire variant system. Nothing else in the app knows the roster
   // exists, so adding, recolouring or renaming one is a single edit here.
   const VARIANTS = [
-    { id: "base", name: "Brachydios", icon: "brachy", filter: "none",
+    { id: "base", name: "Brachydios", icon: "brachy", filter: "none", theme: "#0B2757",
       ore: null, rank: 0, w: 200, hp: 1, shift: 0 },
 
     // Weights fall monotonically down the whole list, so a common ore is never rarer
     // than a better one. They used to be ordered within each rank block only, which
     // put Dragonite (18) below Fucium (22) — you ended up with more of the high-rank
     // ore than the low-rank one it was supposed to be feeding into.
-    { id: "iron", name: "Iron Brachydios", icon: "brachy",
+    { id: "iron", name: "Iron Brachydios", icon: "brachy", theme: "#4a4f57",
       filter: "saturate(.2) brightness(1.05)",
       ore: "iron", rank: 0, w: 120, hp: 1.3, shift: 0 },
-    { id: "earth", name: "Earth Crystal Brachydios", icon: "brachy",
+    { id: "earth", name: "Earth Crystal Brachydios", icon: "brachy", theme: "#8a8f96",
       filter: "grayscale(.85) brightness(1.3)",
       ore: "earth", rank: 0, w: 104, hp: 1.45, shift: 0 },
-    { id: "machalite", name: "Machalite Brachydios", icon: "brachy",
+    { id: "machalite", name: "Machalite Brachydios", icon: "brachy", theme: "#1e63a8",
       filter: "hue-rotate(-10deg) saturate(1.5) brightness(1.05)",
       ore: "machalite", rank: 0, w: 88, hp: 1.7, shift: 0 },
-    { id: "dragonite", name: "Dragonite Brachydios", icon: "brachy",
+    { id: "dragonite", name: "Dragonite Brachydios", icon: "brachy", theme: "#2f8f3f",
       filter: "hue-rotate(-100deg) saturate(1.4)",
       ore: "dragonite", rank: 0, w: 68, hp: 2.2, shift: 1 },
 
-    { id: "carbalite", name: "Carbalite Brachydios", icon: "brachy",
+    { id: "carbalite", name: "Carbalite Brachydios", icon: "brachy", theme: "#6b3fa0",
       filter: "hue-rotate(60deg) saturate(1.5)",
       ore: "carbalite", rank: 1, w: 46, hp: 2.6, shift: 1 },
-    { id: "fucium", name: "Fucium Brachydios", icon: "brachy",
+    { id: "fucium", name: "Fucium Brachydios", icon: "brachy", theme: "#d15f92",
       filter: "hue-rotate(112deg) saturate(1.45) brightness(1.5)",
       ore: "fucium", rank: 1, w: 34, hp: 3, shift: 1 },
-    { id: "lightcrystal", name: "Lightcrystal Brachydios", icon: "brachy",
+    { id: "lightcrystal", name: "Lightcrystal Brachydios", icon: "brachy", theme: "#b9c4cc",
       filter: "saturate(.04) brightness(1.8)",
       ore: "lightcrystal", rank: 1, w: 25, hp: 3.4, shift: 1 },
-    { id: "firecell", name: "Firecell Brachydios", icon: "brachy",
+    { id: "firecell", name: "Firecell Brachydios", icon: "brachy", theme: "#e07820",
       filter: "hue-rotate(170deg) saturate(1.8) brightness(1.05)",
       ore: "firecell", rank: 1, w: 18, hp: 4.2, shift: 2 },
 
-    { id: "eltalite", name: "Eltalite Brachydios", icon: "brachy",
+    { id: "eltalite", name: "Eltalite Brachydios", icon: "brachy", theme: "#b52020",
       filter: "hue-rotate(140deg) saturate(1.9)",
       ore: "eltalite", rank: 2, w: 13, hp: 5, shift: 1 },
-    { id: "allfire", name: "Allfire Brachydios", icon: "brachy",
+    { id: "allfire", name: "Allfire Brachydios", icon: "brachy", theme: "#6e1010",
       filter: "hue-rotate(140deg) saturate(2.4) brightness(.5)",
       ore: "allfire", rank: 2, w: 9, hp: 6.5, shift: 2 },
-    { id: "purecrystal", name: "Purecrystal Brachydios", icon: "brachy",
+    { id: "purecrystal", name: "Purecrystal Brachydios", icon: "brachy", theme: "#3fa8c8",
       filter: "hue-rotate(-30deg) saturate(1.3) brightness(1.25)",
       ore: "purecrystal", rank: 2, w: 6, hp: 7.5, shift: 2 },
-    { id: "ultimas", name: "Ultimas Brachydios", icon: "brachy",
+    { id: "ultimas", name: "Ultimas Brachydios", icon: "brachy", theme: "#d8b820",
       filter: "hue-rotate(195deg) saturate(1.9) brightness(1.1)",
       ore: "ultimas", rank: 2, w: 4, hp: 8.5, shift: 2 },
 
     // The only variant with its own artwork, and the rarest thing in the pool.
     // "*G" means it pays out a spread of G-rank ores instead of a single one.
-    { id: "raging", name: "Raging Brachydios", icon: "raging", filter: "none",
+    { id: "raging", name: "Raging Brachydios", icon: "raging", filter: "none", theme: "#8a2b0f",
       ore: "*G", rank: 2, w: 2, hp: 12, shift: 2 },
   ];
   const variantById = Object.fromEntries(VARIANTS.map(v => [v.id, v]));

@@ -41,8 +41,8 @@
           <div class="hpbar-text" id="hpText">0 / 0</div>
         </div>
         <div class="arena-stats">
-          <span><b>Click</b> <i id="statDmg">1</i></span>
-          <span><b>Crit</b> <i id="statCrit">0%</i></span>
+          <span><b>Click</b> <i id="statDmg" title="Base damage per click">1</i></span>
+          <span><b>Crit</b> <i id="statCrit" title="Chance and multiplier">0%</i></span>
           <span><b>Palico</b> <i id="statDps">0/s</i></span>
           <span><b>Hunters</b> <i id="statAuto">0/s</i></span>
           <span><b>Charms</b> <i id="statDrop">1</i></span>
@@ -210,8 +210,9 @@
       <dt>Melding</dt><dd>Three charms of the <b>same rarity</b> become one charm of the
         <b>next rarity up</b> — three rarity 1s make a rarity 2. Rarity 10 is the ceiling, so
         three 10s return a 10, which is still a fresh roll on the best table. As in the game,
-        <b>one meld resolves per hunt</b> — load the pot, then go killing. Rows resolve
-        top-down, and each shows how many hunts away it is</dd>
+        <b>one meld resolves per hunt</b> — load the pot, then go killing. Whatever has
+        been waiting longest goes first, so a row you just filled never jumps ahead of one
+        already on the stack. Each row shows how many hunts away its turn is</dd>
       <dt>Auto-fill</dt><dd>Loads rows from whatever you have three-of, best rarity first</dd>
       <dt><kbd>Ctrl</kbd> + <kbd>S</kbd></dt><dd>Save to a file</dd>
       <dt><kbd>Esc</kbd></dt><dd>Close a dialog</dd>
@@ -337,10 +338,10 @@
 <script src="data/charm.js?v=1"></script>
 <script src="data/skills.js?v=1"></script>
 <script src="data/ores.js?v=1"></script>
-<script src="roll.js?v=3"></script>
-<script src="farm.js?v=7"></script>
-<script src="box.js?v=4"></script>
-<script src="ui.js?v=7"></script>
-<script src="app.js?v=6"></script>
+<script src="roll.js?v=4"></script>
+<script src="farm.js?v=8"></script>
+<script src="box.js?v=7"></script>
+<script src="ui.js?v=10"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>

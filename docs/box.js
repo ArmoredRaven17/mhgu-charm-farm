@@ -20,6 +20,9 @@ window.BOX = (function () {
 
   let box = new Array(BOX_SIZE).fill(null);
   let pot = Array.from({ length: POT_ROWS }, () => new Array(POT_COLS).fill(null));
+  // Load order per row — 0 means "not a complete row". See queuedRows().
+  let potSeq = new Array(POT_ROWS).fill(0);
+  let seqNext = 1;
   let localSaveEnabled = true;
   let dirty = false;
   let saveTimer = null;
@@ -81,9 +84,14 @@ window.BOX = (function () {
   }
   function setAt(i, c) { box[i] = c || null; touched(); }
 
+  // A god charm can't be sold, melded, or thrown away by any route. The guard lives
+  // here rather than in the UI so no path — a button, a bulk action, a future feature
+  // — can get around it by forgetting to check.
+  const sellable = c => !!c && !window.ROLL.isGod(c);
+
   function sellAt(i) {
     const c = box[i];
-    if (!c) return 0;
+    if (!sellable(c)) return 0;
     const v = window.ROLL.charmValue(c);
     box[i] = null;
     window.FARM.state.zenny += v;
@@ -95,7 +103,9 @@ window.BOX = (function () {
   function sellWhere(pred) {
     let total = 0, n = 0;
     for (let i = 0; i < BOX_SIZE; i++) {
-      if (box[i] && pred(box[i], i)) { total += window.ROLL.charmValue(box[i]); box[i] = null; n++; }
+      if (sellable(box[i]) && pred(box[i], i)) {
+        total += window.ROLL.charmValue(box[i]); box[i] = null; n++;
+      }
     }
     if (n) { window.FARM.state.zenny += total; touched(); }
     return { zenny: total, count: n };
@@ -132,6 +142,7 @@ window.BOX = (function () {
     const displaced = pot[r][c];
     pot[r][c] = charm;
     box[boxIndex] = displaced || null;
+    restamp(r);
     touched();
     return true;
   }
@@ -143,6 +154,7 @@ window.BOX = (function () {
     if (i < 0) return false;      // box full — caller toasts
     box[i] = charm;
     pot[r][c] = null;
+    restamp(r);
     touched();
     return true;
   }
@@ -176,21 +188,36 @@ window.BOX = (function () {
     if (i < 0) return null;
     window.FARM.state.zenny -= window.ROLL.meldFee(rar);
     pot[r] = [null, null, null];
+    potSeq[r] = 0;
     box[i] = out;
     touched();
     return { index: i, charm: out };
   }
 
-  // Rows waiting their turn, in the order they'll resolve. The pot is a queue: the
-  // game resolves one meld per hunt, not one per button press.
+  // Rows waiting their turn, oldest first. The pot is a genuine FIFO queue: whatever
+  // has been sitting there longest resolves next.
+  //
+  // Row position can't carry that order on its own. Auto-fill always refills the
+  // topmost empty row, so a row that just resolved gets brand-new charms and — under
+  // plain top-down resolution — would immediately jump the queue ahead of rows that
+  // had been waiting since before it. Each row therefore gets a sequence number when
+  // it's completed, and that, not its position, decides its turn.
   function queuedRows() {
     const out = [];
     for (let r = 0; r < POT_ROWS; r++) if (!rowProblem(r)) out.push(r);
+    out.sort((a, b) => (potSeq[a] || 0) - (potSeq[b] || 0) || a - b);
     return out;
   }
 
-  // Called when a Brachydios dies. Resolves the topmost ready row and nothing else —
-  // one meld per hunt is the whole rule.
+  // Stamp a row the moment it holds three charms, and clear the stamp when it stops.
+  function restamp(r) {
+    const full = pot[r].every(Boolean);
+    if (full && !potSeq[r]) potSeq[r] = seqNext++;
+    else if (!full) potSeq[r] = 0;
+  }
+
+  // Called when a Brachydios dies. Resolves the next row in the queue and nothing
+  // else — one meld per hunt is the whole rule.
   function resolveOneMeld() {
     const queue = queuedRows();
     if (!queue.length) return null;
@@ -215,6 +242,7 @@ window.BOX = (function () {
       if (pick === undefined) break;
       const idx = byRarity[pick].slice(0, 3);
       for (let c = 0; c < 3; c++) { pot[r][c] = box[idx[c]]; box[idx[c]] = null; }
+      restamp(r);
       loaded++;
     }
     if (loaded) touched();
@@ -230,6 +258,7 @@ window.BOX = (function () {
         box[i] = pot[r][c];
         pot[r][c] = null;
       }
+      potSeq[r] = 0;
     }
     touched();
     return true;
@@ -247,6 +276,8 @@ window.BOX = (function () {
       run: JSON.parse(JSON.stringify(window.FARM.state)),
       box: { size: BOX_SIZE, entries },
       pot: pot.map(row => row.map(c => c || null)),
+      // Queue order, so reloading doesn't shuffle whose turn it is.
+      potSeq: potSeq.slice(),
     };
   }
 
@@ -276,6 +307,15 @@ window.BOX = (function () {
         if (Array.isArray(row)) row.slice(0, POT_COLS).forEach((c, i) => { pot[r][i] = c || null; });
       });
     }
+    // Restore queue order. A save written before this existed has no potSeq, so fall
+    // back to row order — the best guess available, and stable from then on.
+    potSeq = new Array(POT_ROWS).fill(0);
+    const saved = Array.isArray(obj.potSeq) ? obj.potSeq : null;
+    for (let r = 0; r < POT_ROWS; r++) {
+      if (!pot[r].every(Boolean)) continue;
+      potSeq[r] = saved && saved[r] ? saved[r] : r + 1;
+    }
+    seqNext = Math.max(0, ...potSeq) + 1;
     window.FARM.init(obj.run, null);
     dirty = false;
     emit();

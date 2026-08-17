@@ -49,8 +49,18 @@ window.UI = (function () {
     $("hpFill").style.width = (max > 0 ? (hp / max) * 100 : 0) + "%";
     $("hpText").textContent = `${Math.ceil(hp).toLocaleString()} / ${max.toLocaleString()}`;
 
-    $("statDmg").textContent = F.clickDamage().toLocaleString();
-    $("statCrit").textContent = Math.round(F.critChance() * 100) + "%";
+    // "Click" is the BASE damage of one hit. What you see floating off the monster is
+    // usually higher — crits multiply it, and hired hunters throw their own attacks
+    // that float numbers too. Spell both out rather than leave you doing the maths.
+    const base = F.clickDamage(), critMult = F.critMult(), chance = F.critChance();
+    const avg = base * (1 + chance * (critMult - 1));
+    $("statDmg").textContent = base.toLocaleString();
+    $("statDmg").title = `${base.toLocaleString()} damage per click. ` +
+      `A crit deals ${Math.round(base * critMult).toLocaleString()} ` +
+      `(${Math.round(chance * 100)}% chance), averaging ${avg.toFixed(1)} per hit. ` +
+      `Hired hunters attack for the same.`;
+    $("statCrit").textContent = Math.round(chance * 100) + "% · " + critMult.toFixed(2) + "x";
+    $("statCrit").title = `${Math.round(chance * 100)}% chance to deal ${critMult.toFixed(2)}x damage.`;
     $("statDps").textContent = F.dps() + "/s";
     $("statAuto").textContent = F.autoClicks() + "/s";
     $("statDrop").textContent = F.dropCount();
