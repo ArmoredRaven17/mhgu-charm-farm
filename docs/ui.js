@@ -52,6 +52,7 @@ window.UI = (function () {
     $("statDmg").textContent = F.clickDamage().toLocaleString();
     $("statCrit").textContent = Math.round(F.critChance() * 100) + "%";
     $("statDps").textContent = F.dps() + "/s";
+    $("statAuto").textContent = F.autoClicks() + "/s";
     $("statDrop").textContent = F.dropCount();
 
     $("zennyPill").textContent = Math.floor(s.zenny).toLocaleString() + "z";
@@ -291,19 +292,22 @@ window.UI = (function () {
     }
     $("pot").innerHTML = html;
 
-    // The status line explains the first row that's loaded but can't resolve, rather
-    // than leaving ten silent rows and no reason why nothing happens.
-    let firstProblem = null;
+    // Explain the first loaded row that can't resolve, rather than leaving a row
+    // flagged red with no reason given. When melds are already queued the full reason
+    // would be a paragraph in a narrow column, so it shrinks to a pointer — the row's
+    // own red tag is the flag, and hovering its charms shows the rarities.
+    let stuck = null;
     for (let r = 0; r < B.POT_ROWS; r++) {
       if (place[r] !== undefined) continue;
       if (!B.potGet(r, 0) && !B.potGet(r, 1) && !B.potGet(r, 2)) continue;
-      firstProblem = `Row ${r + 1}: ${B.rowProblem(r)}`;
+      stuck = { row: r + 1, why: B.rowProblem(r) };
       break;
     }
     $("potStatus").textContent = queue.length
-      ? `${queue.length} meld${queue.length === 1 ? "" : "s"} queued — one resolves each hunt.` +
-        (firstProblem ? ` ${firstProblem}` : "")
-      : (firstProblem || "Drag three charms of the same rarity into a row. One meld resolves per hunt.");
+      ? `${queue.length} queued — one resolves per hunt.` +
+        (stuck ? ` Row ${stuck.row} isn't set.` : "")
+      : (stuck ? `Row ${stuck.row}: ${stuck.why}`
+              : "Drag three charms of the same rarity into a row. One meld resolves per hunt.");
   }
 
   // ── Detail ───────────────────────────────────────────────────────────────────

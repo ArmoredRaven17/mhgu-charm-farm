@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 <div id="app">
@@ -43,7 +43,8 @@
         <div class="arena-stats">
           <span><b>Click</b> <i id="statDmg">1</i></span>
           <span><b>Crit</b> <i id="statCrit">0%</i></span>
-          <span><b>Idle</b> <i id="statDps">0/s</i></span>
+          <span><b>Palico</b> <i id="statDps">0/s</i></span>
+          <span><b>Hunters</b> <i id="statAuto">0/s</i></span>
           <span><b>Charms</b> <i id="statDrop">1</i></span>
         </div>
       </div>
@@ -186,6 +187,9 @@
       <dt>Click the monster</dt><dd>Deal damage. At zero HP it drops charms, ore and zenny</dd>
       <dt><kbd>Space</kbd></dt><dd>Same as clicking — hold it down</dd>
       <dt>Smithy</dt><dd>Spend zenny <em>and</em> ore on upgrades. Ore comes from the variant wearing that ore's colours</dd>
+      <dt>Palico vs hunter</dt><dd>A hired Palico adds flat damage per second. A
+        <b>Hunter for Hire</b> throws a real attack instead — it uses your click damage and
+        can crit, so hunters get better the more you've spent on hitting harder</dd>
       <dt>Ore chip</dt><dd>Click to sell that ore at the game's real price</dd>
       <dt>God charm</dt><dd>Three slots with <b>both</b> skills at the top of their range. It
         glows gold in the box, and Sell Junk will never take one</dd>
@@ -321,9 +325,9 @@
 <script src="data/skills.js?v=1"></script>
 <script src="data/ores.js?v=1"></script>
 <script src="roll.js?v=2"></script>
-<script src="farm.js?v=5"></script>
+<script src="farm.js?v=6"></script>
 <script src="box.js?v=3"></script>
-<script src="ui.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="ui.js?v=6"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

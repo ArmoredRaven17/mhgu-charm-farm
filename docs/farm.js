@@ -102,6 +102,12 @@ window.FARM = (function () {
       base: 400, mult: 1.25, max: 16, ore: 4 },
     { id: "dps", name: "Hire a Palico", desc: "+2 damage per second, hands-free",
       base: 200, mult: 1.18, max: 200, ore: 3 },
+    // Distinct from a Palico on purpose: a Palico adds flat damage per second, a
+    // hired hunter throws a real attack — so these scale with your click damage and
+    // can crit. Late on they're worth far more than raw DPS, which is why they cost
+    // more and cap lower.
+    { id: "hunters", name: "Hunters for Hire", desc: "+1 attack per second, using your click damage",
+      base: 2500, mult: 1.28, max: 40, ore: 6 },
     { id: "drop", name: "Wider haul", desc: "+1 charm per kill",
       base: 5000, mult: 3.2, max: 6, ore: 8 },
     { id: "zenny", name: "Better appraisal", desc: "+15% zenny per kill",
@@ -137,7 +143,9 @@ window.FARM = (function () {
   let onTick = () => {};
   let onChange = () => {};
   let onKill = () => {};
+  let onAutoClick = () => {};
   let timer = null;
+  let autoCarry = 0;      // fractional auto-attacks owed between ticks
 
   function fresh() {
     return { zenny: 0, kills: 0, hp: 0, variant: "base", upgrades: {}, ores: {} };
@@ -160,6 +168,7 @@ window.FARM = (function () {
   const critChance = () => Math.min(0.5, lvl("crit") * 0.02);
   const critMult = () => 2 + lvl("critdmg") * 0.25;
   const dps = () => lvl("dps") * 2;
+  const autoClicks = () => lvl("hunters");        // attacks per second
   const dropCount = () => 1 + lvl("drop");
   const zennyMult = () => 1 + lvl("zenny") * 0.15;
 
@@ -289,12 +298,26 @@ window.FARM = (function () {
     let last = performance.now();
     timer = setInterval(() => {
       const now = performance.now();
-      const elapsed = (now - last) / 1000;
-      last = now;
-      const d = dps();
       // Measured against the clock rather than assuming a clean 100 ms, so a
       // backgrounded tab that throttles the interval doesn't quietly lose damage.
-      if (d > 0 && state) hit(d * elapsed, false, true);
+      // Capped so returning to a tab that slept for ten minutes doesn't dump a
+      // single colossal hit (or a thousand queued auto-attacks) all at once.
+      const elapsed = Math.min(1, (now - last) / 1000);
+      last = now;
+      if (!state) return;
+
+      const d = dps();
+      if (d > 0) hit(d * elapsed, false, true);
+
+      // Hired hunters attack rather than tick damage: each one runs the same path a
+      // real click does, so it uses click damage and can crit.
+      const cps = autoClicks();
+      if (cps > 0) {
+        autoCarry += cps * elapsed;
+        let n = Math.min(Math.floor(autoCarry), 25);
+        autoCarry -= Math.floor(autoCarry);
+        while (n-- > 0 && state) onAutoClick(click());
+      }
     }, 100);
   }
 
@@ -307,15 +330,17 @@ window.FARM = (function () {
     // Only replace the hooks when we're actually given some. Loading a save calls
     // init again to swap the run state in, and passing null there must not silently
     // unhook the app — that would leave kills dropping charms into nothing.
+    autoCarry = 0;
     if (hooks) {
       onTick = hooks.onTick || (() => {});
       onChange = hooks.onChange || (() => {});
       onKill = hooks.onKill || (() => {});
+      onAutoClick = hooks.onAutoClick || (() => {});
     }
     startTick();
     onChange();
   }
-  function reset() { init(null, { onTick, onChange, onKill }); }
+  function reset() { init(null, { onTick, onChange, onKill, onAutoClick }); }
 
   return {
     VARIANTS, RANKS, UPGRADES, ORES, oreById, variantById, ORE_LADDER,
@@ -323,6 +348,6 @@ window.FARM = (function () {
     zennyCost, oreCost,
     get state() { return state; },
     rankIndex, rankName, variant, hpMax,
-    clickDamage, critChance, critMult, dps, dropCount, zennyMult, lvl,
+    clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, lvl,
   };
 })();

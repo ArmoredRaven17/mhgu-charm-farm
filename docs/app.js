@@ -225,6 +225,13 @@
     // and ten times a second while Palicoes are working, so it must not touch the
     // shop or the ore strip — rebuilding those here is what made purchases misfire.
     onTick: () => { UI.renderArena(); },
+    // A hired hunter's attack should look like an attack — same flash and floating
+    // number a click gets, so you can see the crits they land.
+    onAutoClick: res => {
+      if (!res) return;
+      UI.hitFlash();
+      UI.floatDamage(res.crit ? `${res.dealt}!` : String(res.dealt), res.crit);
+    },
     onChange: () => {
       UI.renderArena(); UI.renderOres(); UI.renderShop();
       markRunDirty();

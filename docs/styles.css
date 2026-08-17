@@ -105,6 +105,11 @@ kbd{
   background-repeat:repeat;background-size:auto,200px 200px;
 }
 .farm-col{display:flex;flex-direction:column;min-height:0;min-width:0}
+/* Both side columns overflow their height by design and scroll. Without this, flex
+   compresses each child to make them fit instead — which squashed the pot's status
+   line to two lines and let its text spill over the slots below it. Let the children
+   keep their natural height and let the column scroll. */
+.arena-col > *,.pot-col > *{flex-shrink:0}
 .arena-col{flex:0 0 310px;border-right:1px solid var(--line);overflow-y:auto}
 .pot-col{flex:0 0 320px;border-left:1px solid var(--line);overflow-y:auto}
 .arena-col,.pot-col{
