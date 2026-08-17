@@ -223,6 +223,9 @@ window.UI = (function () {
   }
 
   function renderGrid() {
+    // Last line of defence: whatever happened upstream, never paint a page that
+    // isn't in range.
+    page = Math.min(Math.max(0, page), window.BOX.pages() - 1);
     for (let i = 0; i < cells.length; i++) paintCell(i);
     $("pageIndicator").textContent = `Page ${page + 1} / ${window.BOX.pages()}`;
     $("prevPage").disabled = page === 0;
@@ -649,7 +652,13 @@ window.UI = (function () {
   }
 
   // Flash a newly melded charm, jumping to its page so it's actually on screen.
+  //
+  // The charm may be gone by the time we get here — Neko sells it if it's at or below
+  // Junk ≤, and Maximeld can pull it straight back into the pot — in which case the
+  // caller hands us -1. Math.floor(-1 / 100) is -1, not 0, so that used to set the
+  // page negative and the indicator read "Page 0". Nothing to flash, so nothing to do.
   function flashFresh(flat) {
+    if (!Number.isInteger(flat) || flat < 0 || flat >= window.BOX.BOX_SIZE) return;
     const p = Math.floor(flat / window.BOX.PAGE);
     if (p !== page) page = p;
     const i = flat - p * window.BOX.PAGE;
@@ -699,6 +708,10 @@ window.UI = (function () {
     maybeAutoSort,
     clearSelection, hideTip, esc,
     get page() { return page; },
-    set page(p) { page = p; },
+    // Clamped, so no caller can put the grid on a page that doesn't exist.
+    set page(p) {
+      const last = window.BOX.pages() - 1;
+      page = Math.min(Math.max(0, Math.trunc(Number(p) || 0)), last);
+    },
   };
 })();
