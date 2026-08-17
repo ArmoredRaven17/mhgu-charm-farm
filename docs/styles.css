@@ -309,13 +309,17 @@ kbd{
     animation:none;box-shadow:inset 0 0 0 1px #ffd24a,0 0 9px rgba(255,210,74,.8)
   }
 }
-/* Carries a number and a hunt count now, so it has to be allowed to wrap rather than
-   run off the side of a 212px card. */
+/* The find gets the loud line; the hunt count sits under it as a quieter footnote. */
 .tip-god{
-  display:block;margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.05em;
-  line-height:1.35;text-transform:uppercase;color:#ffd24a;
+  display:block;margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.06em;
+  line-height:1.3;text-transform:uppercase;color:#ffd24a;
   text-shadow:0 0 6px rgba(255,210,74,.55)
 }
+.tip-god-found{
+  display:block;margin-top:1px;font-size:9.5px;font-weight:400;letter-spacing:.04em;
+  line-height:1.3;text-transform:uppercase;color:#ffd24a;opacity:.72
+}
+.detail-god{text-align:center;margin-bottom:2px}
 
 /* Rarity wash — the game's own box-cell tinting. */
 .box-cell.rarity-1::after  { background:rgba(224,224,224,.42) }

@@ -268,10 +268,12 @@ window.UI = (function () {
   }
 
   // How a god charm names itself. Ones found since they started being stamped carry
-  // their number and the hunt they fell on; older ones just say what they are.
+  // their number and the hunt they fell on; older ones just say what they are. The
+  // two sit on separate lines — the title is the find, the hunt count is the footnote.
   function godLabel(c) {
-    if (!c || !c.g) return "God charm";
-    return `God charm #${c.g}` + (c.gh ? ` · found at ${c.gh.toLocaleString()} hunts` : "");
+    if (!c || !c.g) return `<span class="tip-god">God charm</span>`;
+    const found = c.gh ? `<span class="tip-god-found">Found at ${c.gh.toLocaleString()} hunts</span>` : "";
+    return `<span class="tip-god">God charm #${c.g}</span>${found}`;
   }
 
   // ── Charm hover card ─────────────────────────────────────────────────────────
@@ -294,7 +296,7 @@ window.UI = (function () {
         <div class="tip-icon"><img src="${charmIcon(c)}" alt=""></div>
         <div><div class="tip-name">${esc(window.ROLL.charmName(c.r))}</div>
           <div class="tip-tier">${esc(tier)} table</div>
-          ${god ? `<span class="tip-god">${esc(godLabel(c))}</span>` : ""}</div>
+          ${god ? godLabel(c) : ""}</div>
       </div>
       <div class="tip-row"><span class="k">Rarity</span>
         <span class="v"><span class="tip-rarity rarity-${c.r}">${c.r}</span></span></div>
@@ -407,7 +409,7 @@ window.UI = (function () {
     const tier = window.ROLL.tierOf(c.r);
     let html = `<div class="detail-icon-wrap"><img src="${charmIcon(c)}" alt=""></div>
       <div class="detail-name">${esc(window.ROLL.charmName(c.r))}</div>
-      ${window.ROLL.isGod(c) ? `<div style="text-align:center"><span class="tip-god">${esc(godLabel(c))}</span></div>` : ""}
+      ${window.ROLL.isGod(c) ? `<div class="detail-god">${godLabel(c)}</div>` : ""}
       <div class="detail-section-title">Charm</div>
       ${row("Rarity", c.r)}
       ${row("Roll table", tier.charAt(0).toUpperCase() + tier.slice(1))}
