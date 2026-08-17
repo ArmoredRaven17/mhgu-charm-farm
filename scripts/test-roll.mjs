@@ -98,6 +98,11 @@ check(ores.filter(o => o.rank === 2).every(o => o.rarity >= 8), "every G ore sho
     "a skill one point below its ceiling is not a god charm");
   // Mystery can't reach three slots, so it can never produce one.
   check(!ROLL.isGod({ r: 1, s: 3, k: god.k }), "a mystery-tier charm can't be a god charm");
+  // Creator Talismans only. Rarities 8 and 9 share the enduring table, so these have
+  // identical stats to the real thing and must still be rejected.
+  check(!ROLL.isGod({ ...god, r: 9 }), "a maxed 3-slot rarity 9 is not a god charm");
+  check(!ROLL.isGod({ ...god, r: 8 }), "a maxed 3-slot rarity 8 is not a god charm");
+  check(ROLL.charmName(10) === "Creator Talisman", "rarity 10 should be the Creator Talisman");
   // And a god charm is never a legal meld input, at any position in the row.
   const plain = ROLL.rollCharm(10);
   const plain2 = ROLL.rollCharm(10);

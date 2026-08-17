@@ -317,7 +317,7 @@
       // A god charm outranks every other thing the hunt could tell you about.
       const god = res.charms.find(ROLL.isGod) || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
       if (god) {
-        toast(`God charm! A ${ROLL.charmName(god.r)} with three slots and both skills maxed.`, 6000);
+        toast(`God charm! A ${ROLL.charmName(god.r)} with three slots and both skills maxed.`, 8000);
       } else if (placed < res.charms.length) {
         const lost = res.charms.length - placed;
         toast(`Box full — ${lost} charm${lost === 1 ? "" : "s"} lost. Sell or meld something.`, 3600);

@@ -142,11 +142,17 @@ window.ROLL = (function () {
     return problems;
   }
 
-  // A god charm: three slots and both skills rolled at the very top of their range
-  // for that tier. Three slots already forces timeworn or better, so this is as good
-  // as the tables allow a charm to be — the thing you farm for and never see.
+  // A god charm: a Creator Talisman with three slots and both skills rolled at the
+  // very top of their range. As good as the tables allow a charm to be — the thing
+  // you farm for and never see.
+  //
+  // Rarity 10 specifically, not merely "any rarity that can reach three slots".
+  // Rarities 8, 9 and 10 all roll off the same enduring table, so a maxed 3-slot
+  // rarity 9 has identical stats to a rarity 10 and still won't count — the title is
+  // reserved for the endgame talisman, because that's the only one anyone keeps.
+  const GOD_RARITY = 10;
   function isGod(c) {
-    if (!c || c.s !== 3) return false;
+    if (!c || c.r !== GOD_RARITY || c.s !== 3) return false;
     const k = c.k || [];
     if (k.length !== 2) return false;
     const table = CHARM.tiers[tierOf(c.r)];
