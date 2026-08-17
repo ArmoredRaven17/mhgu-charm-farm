@@ -80,21 +80,26 @@ window.UI = (function () {
     const avg = base * (1 + chance * (critMult - 1));
     const rate = F.autoClicks();
     const dmg = n => Math.round(n * DAMAGE_DISPLAY).toLocaleString();
-    $("statDmg").textContent = dmg(base);
+    const pct = Math.round(chance * 100);
+    $("statDmg").textContent = dmg(base) + " dmg/click";
     $("statDmg").title = `${dmg(base)} damage per click. ` +
       `A crit deals ${dmg(base * critMult)} ` +
-      `(${Math.round(chance * 100)}% chance — the pink slash), averaging ${dmg(avg)} per hit. ` +
+      `(${pct}% chance — the pink slash), averaging ${dmg(avg)} per hit. ` +
       `Hired hunters attack for the same.`;
-    $("statCrit").textContent = Math.round(chance * 100) + "% · " + critMult.toFixed(2) + "x";
-    $("statCrit").title = `${Math.round(chance * 100)}% chance to deal ${critMult.toFixed(2)}x damage.`;
-    $("statDps").textContent = dmg(F.dps()) + "/s";
+    $("statCrit").textContent = pct + "%";
+    $("statCrit").title = `${pct}% of your hits land as criticals — the pink slash.`;
+    $("statCritMult").textContent = critMult.toFixed(2) + "x";
+    $("statCritMult").title = `A critical deals ${critMult.toFixed(2)}x damage, ${dmg(base * critMult)} a click.`;
+    $("statDps").textContent = dmg(F.dps()) + " dmg/s";
     $("statDps").title = `${dmg(F.dps())} damage per second from hired Palicoes, hands-free.`;
-    $("statAuto").textContent = rate + "/s";
+    $("statAuto").textContent = rate + (rate === 1 ? " click/s" : " clicks/s");
     $("statAuto").title = rate
       ? `${rate} attack${rate === 1 ? "" : "s"} per second, each for your click damage — ` +
         `about ${dmg(rate * avg)} damage per second.`
       : "No hunters hired yet. Each one attacks once a second for your click damage.";
-    $("statDrop").textContent = F.dropCount();
+    const drop = F.dropCount();
+    $("statDrop").textContent = drop + "/hunt";
+    $("statDrop").title = `${drop} charm${drop === 1 ? "" : "s"} from every kill.`;
     const gods = F.state.gods || 0;
     $("statGodsWrap").classList.toggle("hidden", gods === 0);
     $("statGods").textContent = gods.toLocaleString();

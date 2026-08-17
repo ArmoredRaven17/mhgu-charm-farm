@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=20">
+<link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
 <div id="app">
@@ -43,15 +43,18 @@
         <button type="button" class="arena-target" id="target" aria-label="Attack">
           <img id="targetImg" src="assets/MonsterIcons/MHGU-Brachydios_Icon.webp" alt="">
         </button>
+        <!-- Two columns, filled by row, so Affinity and Critical end up stacked in the
+             right-hand one — they're the pair you read together. -->
         <div class="arena-stats">
-          <span><b>Click</b> <i id="statDmg" title="Base damage per click">1</i></span>
-          <span><b>Crit</b> <i id="statCrit" title="Chance and multiplier">0%</i></span>
-          <span><b>Palico</b> <i id="statDps">0/s</i></span>
-          <span><b>Hunters</b> <i id="statAuto">0/s</i></span>
-          <span><b>Charms</b> <i id="statDrop">1</i></span>
+          <span><b>Attack:</b> <i id="statDmg" title="Damage per click">1 dmg/click</i></span>
+          <span><b>Affinity:</b> <i id="statCrit" title="Chance of a critical hit">0%</i></span>
+          <span><b>Palico:</b> <i id="statDps">0 dmg/s</i></span>
+          <span><b>Critical:</b> <i id="statCritMult" title="Critical damage multiplier">1.00x</i></span>
+          <span><b>Charm:</b> <i id="statDrop">1/hunt</i></span>
+          <span><b>Hunters:</b> <i id="statAuto">0 clicks/s</i></span>
           <!-- Hidden until you've found one; a permanent "God 0" would just be a
                reminder of what you haven't got. -->
-          <span id="statGodsWrap" class="hidden"><b>God</b> <i id="statGods">0</i></span>
+          <span id="statGodsWrap" class="hidden"><b>God:</b> <i id="statGods">0</i></span>
         </div>
       </div>
 
@@ -361,7 +364,7 @@
 <script src="roll.js?v=6"></script>
 <script src="farm.js?v=23"></script>
 <script src="box.js?v=10"></script>
-<script src="ui.js?v=25"></script>
+<script src="ui.js?v=26"></script>
 <script src="app.js?v=23"></script>
 </body>
 </html>
