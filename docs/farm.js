@@ -213,25 +213,25 @@ window.FARM = (function () {
     // something you drift into: each wants a stack of a G-rank ore, and Ultimas
     // Crystal is the rarest drop in the game.
     { id: "maximeld", name: "Maximeld XIV", hire: true, desc: "Loads the Melding Pot for you after every hunt",
-      base: 3000000, mult: 1, max: 1, ore: 16, oreQty: 15 },
+      base: 1500000, mult: 1, max: 1, ore: 16, oreQty: 15 },
     // Sells at whatever "Junk ≤" is already set to, so the hire adds no new control —
     // the dropdown you were already using becomes her instructions.
     { id: "neko", name: "Neko (Means Cat)", hire: true, desc: "Sells junk charms for you, at your Junk ≤ setting",
-      base: 4000000, mult: 1, max: 1, ore: 18, oreQty: 12 },
+      base: 2000000, mult: 1, max: 1, ore: 18, oreQty: 12 },
     { id: "argosy", name: "Argosy Captain", hire: true, desc: "Sells ore no upgrade still needs, plus any surplus",
-      base: 5000000, mult: 1, max: 1, ore: 20, oreQty: 12 },
+      base: 2500000, mult: 1, max: 1, ore: 20, oreQty: 12 },
     // 10 Ultimas rather than 20: the ore ladder caps at Ultimas Crystal, so the late
     // levels of every other upgrade are competing for the same drop. At 20 the
     // simulation never once managed to bank enough, in any profile.
     { id: "kokoto", name: "Kokoto Gal", hire: true, desc: "Spends your zenny and ore on upgrades for you",
-      base: 8000000, mult: 1, max: 1, ore: 22, oreQty: 10 },
+      base: 4000000, mult: 1, max: 1, ore: 22, oreQty: 10 },
     // The last hire, and the only one you can't meet on a first run: it appears once
     // you have prestiged at least once, because until then "prestige for me" is an
     // offer to do something you have never seen happen. With this and Kokoto Gal both
     // working, the farm runs its own loop — climb, finish, prestige, climb again.
     { id: "guild", name: "Guild Manager", hire: true, afterPrestige: true,
       desc: "Prestiges for you as soon as the smithy is finished",
-      base: 12000000, mult: 1, max: 1, ore: 22, oreQty: 20 },
+      base: 6000000, mult: 1, max: 1, ore: 22, oreQty: 20 },
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
 
@@ -577,12 +577,16 @@ window.FARM = (function () {
   //
   // Kokoto Gal and the simulation both reach the shop through here, so the automated
   // player spends the way a paying one would rather than hoarding zenny it can't use.
-  function stockUpFor(up) {
+  //
+  // `maxGap` limits it to upgrades that are nearly there: the Argosy Captain uses it to
+  // close a small shortfall rather than bankroll a whole level's ore.
+  function stockUpFor(up, maxGap) {
     const level = lvl(up.id);
     if (level >= maxLevel(up)) return 0;
     const oc = oreCost(up, level);
     const short = oc.qty - (state.ores[oc.ore] || 0);
     if (short <= 0) return 0;
+    if (maxGap != null && short > maxGap) return 0;
     const oreBill = short * oreBuyPrice(oc.ore);
     // Never spend so much on ore that the upgrade itself falls out of reach.
     if (state.zenny < oreBill + zennyCost(up, level)) return 0;

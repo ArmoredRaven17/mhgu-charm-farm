@@ -277,7 +277,12 @@
   // How much of a still-needed ore the Argosy Captain leaves you. Enough to cover
   // several upgrade levels without hoarding.
   const ARGOSY_RESERVE = 60;
-  let argosyEarned = 0, nekoEarned = 0;
+  // How close an upgrade must be to its ore requirement before the Argosy Captain
+  // will buy the difference. Small on purpose: ore buys at ten times what it sells
+  // for, so closing a three-ore gap is a convenience and funding a full stack is a
+  // way to burn a fortune.
+  const ARGOSY_GAP = 3;
+  let argosyEarned = 0, argosySpent = 0, nekoEarned = 0;
 
   // Set while replaying an absence. The catch-up runs the real kill path thousands of
   // times, and each kill would otherwise rebuild the shop and ore strip with innerHTML
@@ -379,6 +384,17 @@
           if (have > keep) earned += FARM.sellOre(o.id, have - keep);
         }
         if (earned) argosyEarned += earned;
+
+        // Then the other half of his job: anything only a few ore short of its next
+        // level, he tops up. Buying is ten times the sell price, so this is worth doing
+        // for a small gap and not for a whole stack — hence the limit.
+        //
+        // It cannot cycle against the selling above. He keeps ARGOSY_RESERVE (60) of any
+        // still-wanted ore and no level ever asks for more than 12, so an ore he has
+        // enough of to sell is never an ore he is short of.
+        let spent = 0;
+        for (const up of FARM.visibleUpgrades()) spent += FARM.stockUpFor(up, ARGOSY_GAP);
+        if (spent) argosySpent += spent;
       }
 
       // The Guild Manager takes the decision off your hands: the moment the smithy is
