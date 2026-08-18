@@ -314,7 +314,8 @@
       `hunt${summary.kills === 1 ? "" : "s"} and ${summary.zenny.toLocaleString()}z.`;
     if (away > MAX_OFFLINE_HOURS * 3600) msg += ` (Capped at ${MAX_OFFLINE_HOURS} hours.)`;
     if (offlineGod) {
-      msg += ` God Charm #${offlineGodNumber} at ${offlineGodHunts.toLocaleString()} hunts.`;
+      const onRun = offlineGod.gp ? ` on Prestige ${offlineGod.gp}` : "";
+      msg += ` God Charm #${offlineGodNumber} at ${offlineGodHunts.toLocaleString()} hunts${onRun}.`;
     }
     toast(msg, offlineGod ? 9000 : 6000, true);
   }
@@ -438,12 +439,19 @@
         // rest. Charms found before this existed simply carry no stamp.
         god.g = godNumber;
         god.gh = godAt;
+        // Which climb it fell on. Not decoration: the hunt count resets at every
+        // prestige, so "at 1,234 hunts" means nothing on its own once you have
+        // prestiged — two charms can carry the same hunt number from different runs.
+        // Only stamped when there is a prestige to record, so a first-run charm reads
+        // exactly as it did before.
+        if (FARM.prestige()) god.gp = FARM.prestige();
         offlineGod = god; offlineGodHunts = godAt; offlineGodNumber = godNumber;
       }
       if (quiet) return;                 // the rest is painting and toasts
 
       if (god) {
-        toast(`God Charm #${godNumber} at ${godAt.toLocaleString()} hunts.`, 9000, true);
+        const onRun = god.gp ? ` on Prestige ${god.gp}` : "";
+        toast(`God Charm #${godNumber} at ${godAt.toLocaleString()} hunts${onRun}.`, 9000, true);
       } else if (placed < res.charms.length) {
         const lost = res.charms.length - placed;
         toast(`Box full — ${lost} charm${lost === 1 ? "" : "s"} lost. Sell or meld something.`, 3600, true);

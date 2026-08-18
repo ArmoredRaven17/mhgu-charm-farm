@@ -361,7 +361,14 @@ window.UI = (function () {
   // two sit on separate lines — the title is the find, the hunt count is the footnote.
   function godLabel(c) {
     if (!c || !c.g) return `<span class="tip-god">God charm</span>`;
-    const found = c.gh ? `<span class="tip-god-found">Found at ${c.gh.toLocaleString()} hunts</span>` : "";
+    // The prestige shares the footnote with the hunt count, because it is what makes
+    // that number mean anything: hunts restart at every prestige, so two charms can
+    // carry the same one from different runs. A first-run charm has no prestige stamp
+    // and reads exactly as it did before.
+    const run = c.gp ? ` on Prestige ${c.gp}` : "";
+    const found = c.gh
+      ? `<span class="tip-god-found">Found at ${c.gh.toLocaleString()} hunts${run}</span>`
+      : (c.gp ? `<span class="tip-god-found">Found on Prestige ${c.gp}</span>` : "");
     return `<span class="tip-god">God charm #${c.g}</span>${found}`;
   }
 
