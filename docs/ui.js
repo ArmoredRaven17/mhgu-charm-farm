@@ -28,6 +28,7 @@ window.UI = (function () {
   let junkMax = 2;          // highest rarity Sell Junk will take
   let autoSort = false;     // re-apply the chosen sort after every hunt
   let hiresPaused = {};     // hire id -> true when stood down
+  let oreMode = "sell";     // the ore strip doubles as the shop: "sell" or "buy"
   let toastTimer = null;
   let cells = [];           // the 100 cell divs, built once and repainted in place
 
@@ -167,16 +168,35 @@ window.UI = (function () {
   const hitFlash = () => slash(false);      // kept for anything still calling it
 
   // ── Ore strip ────────────────────────────────────────────────────────────────
+  // The strip is both shop windows. Rather than a second set of chips or a dialog, the
+  // same twelve buttons switch between selling and buying — the ore, its icon and your
+  // stock are identical either way, and only the price and what a click does change.
   function renderOres() {
     const F = window.FARM, stock = F.state.ores;
+    const buying = oreMode === "buy";
     // Only ores your rank could have met are worth a row; the rest would be twelve
-    // permanent zeroes on a fresh save.
+    // permanent zeroes on a fresh save. Buying is held to the same rule, so the shop
+    // can't sell you a G-rank ore before you've reached G.
     const rank = F.rankIndex();
     const visible = F.ORES.filter(o => o.rank <= rank || (stock[o.id] || 0) > 0);
+    const btn = $("oreModeBtn");
+    if (btn) {
+      btn.textContent = buying ? "Buying" : "Selling";
+      btn.classList.toggle("buying", buying);
+      btn.title = buying
+        ? "Click an ore to buy one. Switch back to selling."
+        : "Click an ore to sell one. Switch to buying.";
+    }
     $("oreStrip").innerHTML = visible.map(o => {
       const n = stock[o.id] || 0;
-      return `<button type="button" class="ore-chip${n ? "" : " none"}" data-ore="${o.id}"
-        title="${esc(o.name)} — sells for ${window.FARM.oreValue(o.id).toLocaleString()}z each${n ? ". Click to sell one" : ""}">
+      const price = buying ? F.oreBuyPrice(o.id) : F.oreValue(o.id);
+      // Greyed means the click would do nothing: nothing to sell, or nothing to pay with.
+      const dead = buying ? F.state.zenny < price : n === 0;
+      const what = buying
+        ? `costs ${price.toLocaleString()}z each${dead ? ". Not enough zenny" : ". Click to buy one"}`
+        : `sells for ${price.toLocaleString()}z each${dead ? "" : ". Click to sell one"}`;
+      return `<button type="button" class="ore-chip${dead ? " none" : ""}${buying ? " buying" : ""}"
+        data-ore="${o.id}" title="${esc(o.name)} — ${what}">
         <img src="${oreIcon(o.id)}" alt=""><span>${n}</span></button>`;
     }).join("") || `<span class="detail-empty">No ore yet.</span>`;
   }
@@ -629,8 +649,24 @@ window.UI = (function () {
     $("oreStrip").addEventListener("click", ev => {
       const chip = ev.target.closest("[data-ore]");
       if (!chip) return;
-      const gain = window.FARM.sellOre(chip.dataset.ore, 1);
+      const id = chip.dataset.ore;
+      if (oreMode === "buy") {
+        const cost = window.FARM.buyOre(id, 1);
+        if (cost) toast(`Bought one ${window.FARM.oreById[id].name} for ${cost.toLocaleString()}z.`);
+        else toast(`Not enough zenny for ${window.FARM.oreById[id].name}.`);
+        renderOres();
+        return;
+      }
+      const gain = window.FARM.sellOre(id, 1);
       if (gain) toast(`Sold for ${gain.toLocaleString()}z.`);
+    });
+
+    // Ore strip mode. Persisted like the sort and Junk settings, so the strip is
+    // still in the mode you left it in next session.
+    $("oreModeBtn").addEventListener("click", () => {
+      oreMode = oreMode === "buy" ? "sell" : "buy";
+      hooks.settingChanged("oreMode", oreMode);
+      renderOres();
     });
 
     // Shop — buying, and standing a hire down or putting them back to work.
@@ -808,6 +844,8 @@ window.UI = (function () {
   return {
     buildGrid, renderAll, renderArena, renderGrid, renderPot, renderDetail, renderOres,
     renderShop, renderRoster, initEvents, toast, hitFlash, slash,
+    set oreMode(v) { oreMode = v === "buy" ? "buy" : "sell"; },
+    get oreMode() { return oreMode; },
     showHit, flashFresh,
     setConfirmBulk, setJunkMax, setAutoSort, setHiresPaused, setSortKey, setSortDir,
     maybeAutoSort,

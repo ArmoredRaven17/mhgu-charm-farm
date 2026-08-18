@@ -387,8 +387,15 @@
       if (hireOn("kokoto")) {
         for (let i = 0; i < 40; i++) {
           const pick = FARM.nextPurchase();
-          if (!pick) break;
-          FARM.buy(pick.up.id);
+          if (pick) { FARM.buy(pick.up.id); continue; }
+          // Nothing affordable outright — see whether buying the missing ore unblocks
+          // the cheapest thing still wanted, now that ore can be bought.
+          let moved = false;
+          for (const up of FARM.UPGRADES) {
+            if (FARM.lvl(up.id) >= FARM.maxLevel(up)) continue;
+            if (FARM.stockUpFor(up) && !FARM.buy(up.id)) { moved = true; break; }
+          }
+          if (!moved) break;
         }
       }
       // First of its kind: its theme is now yours, so rebuild the picker. Tracked even
@@ -478,6 +485,7 @@
   UI.setHiresPaused(state.hiresPaused);
   UI.setSortDir(state.sortDir);
   UI.setSortKey(state.sortKey);
+  UI.oreMode = state.oreMode || "sell";
 
   // Restore. With browser-save on it loads silently; with it off, the banner offers
   // the choice rather than throwing away last session's work without asking.

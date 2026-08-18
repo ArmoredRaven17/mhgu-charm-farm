@@ -150,6 +150,28 @@ window.FARM = (function () {
   })();
   const oreValue = id => ORE_VALUE[id] != null ? ORE_VALUE[id] : oreById[id].sell;
 
+  // Buying an ore costs ten times what it sells for. That spread isn't invented: in
+  // mhgu.db the buy column is exactly 10x sell for all twelve of these, so this is the
+  // game's own margin. Derived from oreValue rather than the raw sell price, so the
+  // lifted Eltalite price carries through and buying climbs the ladder too.
+  const ORE_BUY_MARGIN = 10;
+  const oreBuyPrice = id => oreValue(id) * ORE_BUY_MARGIN;
+
+  // Ore you can buy is ore you don't have to wait for. It gives a late player's bank
+  // something to do besides sit there, and turns "blocked on Ultimas Crystal" from a
+  // wait into a decision about whether it's worth 75,000z a piece.
+  function buyOre(id, qty) {
+    if (!state || !oreById[id]) return 0;
+    const n = Math.max(0, Math.floor(qty || 0));
+    if (!n) return 0;
+    const cost = n * oreBuyPrice(id);
+    if (state.zenny < cost) return 0;
+    state.zenny -= cost;
+    state.ores[id] = (state.ores[id] || 0) + n;
+    onChange();
+    return cost;
+  }
+
   const UPGRADES = [
     // ore:0 puts this at the bottom of the ladder — Iron Ore. Nothing else starts
     // that low, and without it the most common drop in the game would never be asked
@@ -191,18 +213,18 @@ window.FARM = (function () {
     // something you drift into: each wants a stack of a G-rank ore, and Ultimas
     // Crystal is the rarest drop in the game.
     { id: "maximeld", name: "Maximeld XIV", hire: true, desc: "Loads the Melding Pot for you after every hunt",
-      base: 60000, mult: 1, max: 1, ore: 16, oreQty: 15 },
+      base: 3000000, mult: 1, max: 1, ore: 16, oreQty: 15 },
     // Sells at whatever "Junk ≤" is already set to, so the hire adds no new control —
     // the dropdown you were already using becomes her instructions.
     { id: "neko", name: "Neko (Means Cat)", hire: true, desc: "Sells junk charms for you, at your Junk ≤ setting",
-      base: 90000, mult: 1, max: 1, ore: 18, oreQty: 12 },
+      base: 4000000, mult: 1, max: 1, ore: 18, oreQty: 12 },
     { id: "argosy", name: "Argosy Captain", hire: true, desc: "Sells ore no upgrade still needs, plus any surplus",
-      base: 120000, mult: 1, max: 1, ore: 20, oreQty: 12 },
+      base: 5000000, mult: 1, max: 1, ore: 20, oreQty: 12 },
     // 10 Ultimas rather than 20: the ore ladder caps at Ultimas Crystal, so the late
     // levels of every other upgrade are competing for the same drop. At 20 the
     // simulation never once managed to bank enough, in any profile.
     { id: "kokoto", name: "Kokoto Gal", hire: true, desc: "Spends your zenny and ore on upgrades for you",
-      base: 250000, mult: 1, max: 1, ore: 22, oreQty: 10 },
+      base: 8000000, mult: 1, max: 1, ore: 22, oreQty: 10 },
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
 
@@ -534,6 +556,25 @@ window.FARM = (function () {
   // levelled-up line kept winning on price while everything still sitting on Iron Ore
   // went untouched, so cheap ores piled up unspent while you starved for rare ones.
   // Within a rung it still takes the cheapest, so progress inside a tier stays smooth.
+  // Buy the ore an upgrade is short of, if that's the only thing stopping it and both
+  // the ore and the upgrade are affordable. This is what stops a rich player standing
+  // idle waiting for Ultimas Crystal to drop — the wait becomes a decision about
+  // whether it's worth the money.
+  //
+  // Kokoto Gal and the simulation both reach the shop through here, so the automated
+  // player spends the way a paying one would rather than hoarding zenny it can't use.
+  function stockUpFor(up) {
+    const level = lvl(up.id);
+    if (level >= maxLevel(up)) return 0;
+    const oc = oreCost(up, level);
+    const short = oc.qty - (state.ores[oc.ore] || 0);
+    if (short <= 0) return 0;
+    const oreBill = short * oreBuyPrice(oc.ore);
+    // Never spend so much on ore that the upgrade itself falls out of reach.
+    if (state.zenny < oreBill + zennyCost(up, level)) return 0;
+    return buyOre(oc.ore, short);
+  }
+
   function nextPurchase() {
     let best = null;
     for (const up of UPGRADES) {
@@ -667,8 +708,8 @@ window.FARM = (function () {
 
   return {
     VARIANTS, RANKS, UPGRADES, ORES, oreById, variantById, ORE_LADDER,
-    init, reset, click, hit, buy, canBuy, sellOre, oreValue, oresStillNeeded, spawn, catchUp, avgHit,
-    nextPurchase,
+    init, reset, click, hit, buy, canBuy, sellOre, oreValue, oreBuyPrice, buyOre, oresStillNeeded, spawn, catchUp, avgHit,
+    nextPurchase, stockUpFor,
     zennyCost, oreCost,
     get state() { return state; },
     rankIndex, rankName, variant, hpMax, hasSeen, upgradeName, maxLevel,

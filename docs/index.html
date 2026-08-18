@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=29">
+<link rel="stylesheet" href="styles.css?v=30">
 </head>
 <body>
 <div id="app">
@@ -67,8 +67,12 @@
         </div>
       </div>
 
-      <!-- Ore stays with the monster it came from — it's what you check as you shop. -->
-      <div class="panel-title">Ore stock</div>
+      <!-- Ore stays with the monster it came from — it's what you check as you shop.
+           The heading carries the sell/buy toggle so the strip can be both shop windows
+           without a second row of controls. -->
+      <div class="panel-title ore-title">Ore stock
+        <button type="button" id="oreModeBtn" class="nav-btn ore-mode">Selling</button>
+      </div>
       <div class="ore-strip" id="oreStrip"></div>
       </div>
 
@@ -387,9 +391,9 @@
 <script src="data/skills.js?v=1"></script>
 <script src="data/ores.js?v=1"></script>
 <script src="roll.js?v=6"></script>
-<script src="farm.js?v=29"></script>
+<script src="farm.js?v=31"></script>
 <script src="box.js?v=10"></script>
-<script src="ui.js?v=33"></script>
-<script src="app.js?v=27"></script>
+<script src="ui.js?v=34"></script>
+<script src="app.js?v=29"></script>
 </body>
 </html>

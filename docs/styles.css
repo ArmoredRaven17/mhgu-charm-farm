@@ -252,6 +252,15 @@ kbd{
   font-variant-numeric:tabular-nums;color:var(--text)
 }
 .ore-chip:hover{background:#ffffff14;border-color:var(--accent-hover)}
+/* Buying reads as the opposite of selling: the chip is tinted rather than plain, so a
+   glance at the strip tells you which way a click will send your money. */
+.ore-chip.buying{border-color:var(--accent-hover);background:#ffffff0f}
+.ore-chip.buying:hover{background:#ffffff24}
+/* The toggle rides in the Ore stock heading, so the strip gains a second mode without
+   costing a row of vertical space in a column that is already tall. */
+.ore-title{display:flex;align-items:center;gap:8px}
+.ore-mode{margin-left:auto;text-transform:none;letter-spacing:0}
+.ore-mode.buying{border-color:var(--accent-hover);color:var(--accent-hover)}
 .ore-chip img{width:18px;height:18px;object-fit:contain;image-rendering:auto}
 .ore-chip.none{opacity:.35;cursor:default}
 .ore-chip.none:hover{background:#00000030;border-color:var(--line)}

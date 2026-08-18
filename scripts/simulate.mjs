@@ -139,7 +139,16 @@ function runProfile(profile, seed) {
       const options = FARM.UPGRADES
         .map(u => ({ u, lv: FARM.lvl(u.id), why: FARM.canBuy(u.id) }))
         .filter(o => o.lv < o.u.max);
-      const pick = FARM.nextPurchase();
+      let pick = FARM.nextPurchase();
+      // Ore can be bought now, so a player sitting on money doesn't simply wait for a
+      // drop. Mirrors what Kokoto Gal does in the app: if nothing is affordable
+      // outright, top up the ore for the cheapest thing still wanted and take it.
+      if (!pick) {
+        for (const u of FARM.UPGRADES) {
+          if (FARM.lvl(u.id) >= FARM.maxLevel(u)) continue;
+          if (FARM.stockUpFor(u) && !FARM.canBuy(u.id)) { pick = FARM.nextPurchase(); break; }
+        }
+      }
       if (pick) {
         FARM.buy(pick.up.id);
         bought = true;
