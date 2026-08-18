@@ -114,7 +114,13 @@ window.FARM = (function () {
   // Names are deliberately plain; rename them freely, nothing keys off the label.
   // Each level costs zenny (growing by `mult`) plus a few of one ore, and the ore
   // demanded steps up as you climb — early levels want Iron, late ones want Ultimas.
-  const ORE_LADDER = ["iron", "machalite", "earth", "dragonite", "carbalite",
+  // Ordered by how hard the ore actually is to get: rank first (from the game's own
+  // mining tables), then within a rank by how common the Brachydios wearing it is.
+  // Machalite Ore used to sit ahead of Earth Crystal, which made the ladder dip — you
+  // climbed to Machalite (sells 160, spawn weight 88) and the next rung asked for
+  // Earth Crystal (sells 80, weight 104), an ore both cheaper and commoner than the one
+  // before it. Every step now costs at least as much as the last.
+  const ORE_LADDER = ["iron", "earth", "machalite", "dragonite", "carbalite",
     "fucium", "lightcrystal", "firecell", "eltalite", "allfire", "purecrystal", "ultimas"];
 
   const UPGRADES = [
