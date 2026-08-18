@@ -380,6 +380,20 @@
         if (earned) argosyEarned += earned;
       }
 
+      // The Guild Manager takes the decision off your hands: the moment the smithy is
+      // finished, it prestiges. Deliberately not during offline catch-up — coming back
+      // to a tab to find a run silently wiped hours ago is not a thing to discover from
+      // a summary line, so it waits for a live kill and announces itself.
+      if (!quiet && hireOn("guild") && FARM.canPrestige()) {
+        const n = FARM.prestige() + 1;
+        if (FARM.doPrestige()) {
+          UI.renderAll();
+          BOX.markDirty();
+          toast(`The Guild Manager filed for Prestige ${n}. Back to Low Rank — and you hit harder.`,
+            4200, true);
+        }
+      }
+
       // Kokoto Gal spends for you, clearing a rung of the ore ladder before climbing
       // to the next — see FARM.nextPurchase, which the simulation uses too. The bound
       // is belt-and-braces: every purchase raises its own next cost, so the loop

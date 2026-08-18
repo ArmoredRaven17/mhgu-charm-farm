@@ -204,7 +204,7 @@ window.UI = (function () {
   // ── Shop ─────────────────────────────────────────────────────────────────────
   function renderShop() {
     const F = window.FARM;
-    $("shop").innerHTML = F.UPGRADES.map(up => {
+    $("shop").innerHTML = F.visibleUpgrades().map(up => {
       const level = F.lvl(up.id);
       const maxed = level >= F.maxLevel(up);
       const label = F.upgradeName(up);      // "Hire a Palico" becomes "Upgrade Palico Gear"

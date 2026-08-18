@@ -225,8 +225,21 @@ window.FARM = (function () {
     // simulation never once managed to bank enough, in any profile.
     { id: "kokoto", name: "Kokoto Gal", hire: true, desc: "Spends your zenny and ore on upgrades for you",
       base: 8000000, mult: 1, max: 1, ore: 22, oreQty: 10 },
+    // The last hire, and the only one you can't meet on a first run: it appears once
+    // you have prestiged at least once, because until then "prestige for me" is an
+    // offer to do something you have never seen happen. With this and Kokoto Gal both
+    // working, the farm runs its own loop — climb, finish, prestige, climb again.
+    { id: "guild", name: "Guild Manager", hire: true, afterPrestige: true,
+      desc: "Prestiges for you as soon as the smithy is finished",
+      base: 12000000, mult: 1, max: 1, ore: 22, oreQty: 20 },
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
+
+  // An upgrade with `afterPrestige` doesn't exist until you have prestiged once. The
+  // shop and both automated buyers go through here, so it can't be rendered, picked or
+  // bought early.
+  const isUnlocked = up => !up.afterPrestige || prestige() > 0;
+  const visibleUpgrades = () => UPGRADES.filter(isUnlocked);
 
   // What an upgrade is called right now.
   //   levelled  — named after a real MHGU skill, so it reads with its rank the way the
@@ -512,6 +525,7 @@ window.FARM = (function () {
   // Returns null when the purchase went through, or a sentence saying what's short —
   // the button stays live and explains itself rather than sitting greyed out.
   function canBuy(id) {
+    if (upgradeById[id] && !isUnlocked(upgradeById[id])) return "Not available yet.";
     const up = upgradeById[id];
     if (!up) return "No such upgrade.";
     const level = lvl(id);
@@ -577,7 +591,7 @@ window.FARM = (function () {
 
   function nextPurchase() {
     let best = null;
-    for (const up of UPGRADES) {
+    for (const up of visibleUpgrades()) {
       const level = lvl(up.id);
       if (level >= maxLevel(up)) continue;
       if (canBuy(up.id)) continue;                    // returns a reason when you can't
@@ -709,7 +723,7 @@ window.FARM = (function () {
   return {
     VARIANTS, RANKS, UPGRADES, ORES, oreById, variantById, ORE_LADDER,
     init, reset, click, hit, buy, canBuy, sellOre, oreValue, oreBuyPrice, buyOre, oresStillNeeded, spawn, catchUp, avgHit,
-    nextPurchase, stockUpFor,
+    nextPurchase, stockUpFor, visibleUpgrades, isUnlocked,
     zennyCost, oreCost,
     get state() { return state; },
     rankIndex, rankName, variant, hpMax, hasSeen, upgradeName, maxLevel,
