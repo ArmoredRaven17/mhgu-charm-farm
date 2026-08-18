@@ -176,7 +176,7 @@ window.UI = (function () {
     $("oreStrip").innerHTML = visible.map(o => {
       const n = stock[o.id] || 0;
       return `<button type="button" class="ore-chip${n ? "" : " none"}" data-ore="${o.id}"
-        title="${esc(o.name)} — sells for ${o.sell.toLocaleString()}z each${n ? ". Click to sell one" : ""}">
+        title="${esc(o.name)} — sells for ${window.FARM.oreValue(o.id).toLocaleString()}z each${n ? ". Click to sell one" : ""}">
         <img src="${oreIcon(o.id)}" alt=""><span>${n}</span></button>`;
     }).join("") || `<span class="detail-empty">No ore yet.</span>`;
   }

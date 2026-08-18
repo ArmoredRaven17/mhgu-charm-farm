@@ -123,6 +123,33 @@ window.FARM = (function () {
   const ORE_LADDER = ["iron", "earth", "machalite", "dragonite", "carbalite",
     "fucium", "lightcrystal", "firecell", "eltalite", "allfire", "purecrystal", "ultimas"];
 
+  // What an ore is worth here. The game's own prices very nearly climb with the ladder
+  // — verified against mhgu.db, where sell is buy/10 for every one of these — but they
+  // dip once: Firecell Stone sells for 1,720z and Eltalite Ore, which is G-exclusive
+  // and rarer, for only 1,280z. Selling a harder-won ore for less reads as a mistake in
+  // a game about climbing a ladder, so any rung whose real price would fall below the
+  // one beneath it is lifted just clear of it.
+  //
+  // This lives here rather than in data/ores.js on purpose: that file is transcribed
+  // game truth and nothing invented belongs in it. The real number stays there, and
+  // this is the design layer choosing to override one of them.
+  const ORE_STEP_UP = 1.15;     // how far clear of the rung below a lifted price sits
+  const ORE_VALUE = (() => {
+    const out = {};
+    let floor = 0;
+    for (const id of ORE_LADDER) {
+      const real = oreById[id].sell;
+      // Only a rung that would actually fall gets lifted. Using a flat 15% floor
+      // instead also moved Lightcrystal and Ultimas Crystal, which already rise —
+      // just by less than 15% — and there is no reason to overwrite a real price
+      // that is already going the right way.
+      out[id] = real > floor ? real : Math.round(floor * ORE_STEP_UP);
+      floor = out[id];
+    }
+    return out;
+  })();
+  const oreValue = id => ORE_VALUE[id] != null ? ORE_VALUE[id] : oreById[id].sell;
+
   const UPGRADES = [
     // ore:0 puts this at the bottom of the ladder — Iron Ore. Nothing else starts
     // that low, and without it the most common drop in the game would never be asked
@@ -516,7 +543,7 @@ window.FARM = (function () {
     const have = state.ores[id] || 0;
     const n = Math.min(have, qty === undefined ? have : qty);
     if (n <= 0) return 0;
-    const gain = n * oreById[id].sell;
+    const gain = n * oreValue(id);
     state.ores[id] = have - n;
     state.zenny += gain;
     onChange();
@@ -630,7 +657,7 @@ window.FARM = (function () {
 
   return {
     VARIANTS, RANKS, UPGRADES, ORES, oreById, variantById, ORE_LADDER,
-    init, reset, click, hit, buy, canBuy, sellOre, oresStillNeeded, spawn, catchUp, avgHit,
+    init, reset, click, hit, buy, canBuy, sellOre, oreValue, oresStillNeeded, spawn, catchUp, avgHit,
     nextPurchase,
     zennyCost, oreCost,
     get state() { return state; },
