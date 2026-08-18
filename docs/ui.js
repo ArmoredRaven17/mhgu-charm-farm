@@ -69,6 +69,12 @@ window.UI = (function () {
     const p = F.prestige();
     $("arenaRank").textContent = `${F.rankName()} · ${s.kills} hunt${s.kills === 1 ? "" : "s"}` +
       (p ? ` · Prestige ${p}` : "");
+    $("prestigePill").classList.toggle("hidden", p === 0);
+    $("prestigePillCount").textContent = p;
+    $("prestigePill").title = p
+      ? `Prestige ${p} — +${Math.round((F.dropMult() - 1) * 100)}% charms and ` +
+        `+${Math.round((F.damageMult() - 1) * 100)}% damage, permanently.`
+      : "";
 
     const img = $("targetImg");
     const src = SPRITES[v.icon];
@@ -143,9 +149,20 @@ window.UI = (function () {
   //
   // No damage numbers and no health bar, deliberately: MHGU shows neither — those
   // arrived in later games. The slash is the whole of the feedback.
-  function showHit(res) {
+  // `auto` means the blow came from a Palico or a hired hunter rather than your own
+  // click. Those get the tile reaction too, since :active can't fire for them.
+  function showHit(res, auto) {
     if (!res) return;
     slash(res.crit, res.palico);
+    if (auto) punchTile();
+  }
+  // Re-adding the class alone won't restart a running animation, so it is removed and
+  // the element's layout read to flush that removal before it goes back on.
+  function punchTile() {
+    const el = $("target");
+    el.classList.remove("struck");
+    void el.offsetWidth;
+    el.classList.add("struck");
   }
   const hitFlash = () => slash(false);      // kept for anything still calling it
 

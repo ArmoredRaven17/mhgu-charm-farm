@@ -157,6 +157,20 @@ kbd{
 }
 .arena-target:hover{filter:brightness(1.12)}
 .arena-target:active{transform:scale(.97)}
+/* A Palico or a hired hunter landing a blow should move the tile the same way your own
+   click does — :active only fires for a real pointer press, so their attacks left the
+   monster perfectly still while damage poured into it. An animation rather than a class
+   toggle, because at thirty attacks a second the hits overlap and a toggle would just
+   pin the tile at the pressed size. Restarted per hit by removing and re-adding. */
+.arena-target.struck{animation:tilepunch .09s ease-out}
+@keyframes tilepunch{
+  0%{transform:scale(1)}
+  45%{transform:scale(.97)}
+  100%{transform:scale(1)}
+}
+@media (prefers-reduced-motion:reduce){
+  .arena-target.struck{animation:none}
+}
 .arena-target img{
   width:82%;height:82%;object-fit:contain;pointer-events:none;
   transition:filter .2s
@@ -367,6 +381,12 @@ kbd{
   box-shadow:0 0 7px rgba(255,210,74,.35)
 }
 .god-pill-icon{width:15px;height:15px;object-fit:contain;image-rendering:auto}
+/* Prestige is a rank, not a trophy, so it takes the accent rather than the god charm's
+   gold — two gold pills side by side would read as one thing. */
+.prestige-pill{
+  border-color:var(--accent-hover);color:var(--accent-hover);font-weight:700;
+  letter-spacing:.02em
+}
 
 /* Rarity wash — the game's own box-cell tinting. */
 .box-cell.rarity-1::after  { background:rgba(224,224,224,.42) }

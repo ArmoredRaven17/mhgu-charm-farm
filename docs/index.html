@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=28">
+<link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
 <div id="app">
@@ -20,6 +20,10 @@
          thousand hunts is just a reminder you haven't got one. -->
     <span id="godPill" class="progress-pill god-pill hidden" title="God charms found">
       <img src="assets/icons/icon_talisman_r10.png" alt="" class="god-pill-icon"><span id="godPillCount">0</span>
+    </span>
+    <!-- Same rule as the god pill: nothing to show until you've earned one. -->
+    <span id="prestigePill" class="progress-pill prestige-pill hidden" title="Prestige">
+      Prestige <span id="prestigePillCount">0</span>
     </span>
     <button id="saveBtn"   class="btn tiny">Save <span id="dirtyDot" class="dirty-dot hidden">●</span></button>
     <button id="saveAsBtn" class="btn tiny">Save As…</button>
@@ -385,7 +389,7 @@
 <script src="roll.js?v=6"></script>
 <script src="farm.js?v=26"></script>
 <script src="box.js?v=10"></script>
-<script src="ui.js?v=31"></script>
-<script src="app.js?v=26"></script>
+<script src="ui.js?v=32"></script>
+<script src="app.js?v=27"></script>
 </body>
 </html>
