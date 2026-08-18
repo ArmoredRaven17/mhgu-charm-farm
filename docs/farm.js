@@ -155,29 +155,29 @@ window.FARM = (function () {
     // that low, and without it the most common drop in the game would never be asked
     // for by anything.
     { id: "dmg", name: "Sharpness", levelled: true, desc: "+1 damage per click",
-      base: 240, mult: 1.15, max: 60, ore: 0 },
+      base: 20, mult: 1.21, max: 60, ore: 0 },
     { id: "crit", name: "Critical Eye", levelled: true, desc: "+2% critical chance",
-      base: 11765, mult: 1.22, max: 20, ore: 3 },
+      base: 7284, mult: 1.28, max: 20, ore: 3 },
     { id: "critdmg", name: "Crit Boost", levelled: true, desc: "+0.25x critical damage",
-      base: 20274, mult: 1.25, max: 16, ore: 4 },
+      base: 15036, mult: 1.31, max: 16, ore: 4 },
     // nameAfter: what the entry is called once you own at least one level. The first
     // purchase is the hire; everything after it is kitting them out.
     { id: "dps", name: "Hire a Palico", nameAfter: "Upgrade Palico Gear",
       desc: "+2 damage per second, hands-free",
-      base: 671, mult: 1.16, max: 50, ore: 3 },
+      base: 95, mult: 1.22, max: 50, ore: 3 },
     // Distinct from a Palico on purpose: a Palico adds flat damage per second, a
     // hired hunter throws a real attack — so these scale with your click damage and
     // can crit. Late on they're worth far more than raw DPS, which is why they cost
     // more and cap lower.
     { id: "hunters", name: "Hunters for Hire", nameAfter: "Upgrade Hunters for Hire Gear",
       desc: "+1 attack per second, using your click damage",
-      base: 8884, mult: 1.2, max: 30, ore: 6 },
+      base: 3425, mult: 1.26, max: 30, ore: 6 },
     { id: "zenny", name: "Crazy Lucky Cat", levelled: true, desc: "+15% zenny per kill",
-      base: 56507, mult: 1.3, max: 12, ore: 5 },
+      base: 49798, mult: 1.36, max: 12, ore: 5 },
     // The supply side of the smithy: every other upgrade spends ore, this one earns it.
     // Named after the MHGU skill that adds reward slots, which is the same idea.
     { id: "luck", name: "Good Luck", levelled: true, desc: "+1 ore from every hunt",
-      base: 56507, mult: 1.3, max: 12, ore: 4 },
+      base: 49798, mult: 1.36, max: 12, ore: 4 },
 
     // The steep 3.2x is deliberate — each level is a flat multiplier on every charm
     // you'll ever get — but the 40,000 base it was raised to in the cost rebalance
@@ -185,7 +185,7 @@ window.FARM = (function () {
     // entirely across a whole session. The steepness is what makes it a long goal;
     // the base only decides whether you can start.
     { id: "drop", name: "Charm Chaser", levelled: true, desc: "+1 charm per kill",
-      base: 36894, mult: 1.45, max: 12, ore: 8 },
+      base: 32900, mult: 1.51, max: 12, ore: 8 },
 
     // The two hires. One-offs, priced to be the thing you save for rather than
     // something you drift into: each wants a stack of a G-rank ore, and Ultimas
@@ -249,15 +249,25 @@ window.FARM = (function () {
   // The quantity climbs every second level. It used to be level/4, which meant the
   // first four levels of anything cost a single ore each — you could buy a row of
   // Palicoes off one hunt's drops.
+  // How big a stack a level asks for. Like the rung itself, this is a fraction of the
+  // way through the upgrade rather than the raw level number — otherwise a long upgrade
+  // demands enormous stacks purely for being long. On the old level/2 rule the last four
+  // levels of Hire a Palico wanted 24-25 Ultimas Crystal each, 98 in total, for +8
+  // damage per second, while Charm Chaser's top level wanted 6.
+  const ORE_QTY_TOP = 12;       // stack size at the very last level of any upgrade
   function oreCost(up, level) {
-    // A hire is a single purchase, so it has no ladder to walk — it keeps the fixed
-    // rung its `ore` field names.
-    const idx = up.hire
-      ? Math.min(ORE_LADDER.length - 1, Math.floor(up.ore / 2))
-      : oreRung(up, level);
-    // oreQty lets a one-off hire ask for a stack rather than the usual single ore.
-    const base = up.oreQty || 1;
-    return { ore: ORE_LADDER[idx], qty: base + Math.floor(level / 2) };
+    // A hire is a single purchase, so it has no ladder to walk and no progress to
+    // measure — it keeps the fixed rung and stack its `ore`/`oreQty` fields name.
+    if (up.hire) {
+      const idx = Math.min(ORE_LADDER.length - 1, Math.floor(up.ore / 2));
+      return { ore: ORE_LADDER[idx], qty: up.oreQty || 1 };
+    }
+    const max = maxLevel(up);
+    const progress = max > 1 ? level / (max - 1) : 1;
+    return {
+      ore: ORE_LADDER[oreRung(up, level)],
+      qty: 1 + Math.round(progress * (ORE_QTY_TOP - 1)),
+    };
   }
   function zennyCost(up, level) {
     return Math.round(up.base * Math.pow(up.mult, level));
