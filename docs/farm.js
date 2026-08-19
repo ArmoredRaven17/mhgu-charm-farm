@@ -320,7 +320,7 @@ window.FARM = (function () {
   //                prestige lengthens the climb without detonating the top of it.
   //                Left to compound, a climb cost 58M, then 441M, then 4.7B, then 68B —
   //                7x to 14x per prestige against rewards that only grow by half.
-  const COST_SPREAD = 60;
+  const COST_SPREAD = 200;
   const COST_CLIMB = 1.6;
   function zennyCost(up, level) {
     if (up.hire) return up.base;              // one-off, bought once, never rescaled
