@@ -383,6 +383,11 @@ window.FARM = (function () {
   // faster so the hunts come quicker too. Both compound with prestige count.
   const PRESTIGE_DROP = 0.35;    // +35% charms per hunt per prestige
   const PRESTIGE_DAMAGE = 0.50;  // +50% damage per prestige
+  // +50% zenny per prestige, matching damage. Without this a climb was strictly poorer
+  // than the one before it: the payout is HP x rate x Crazy Lucky Cat, and both HP and
+  // that skill reset, so hunt 100 paid 87z at every prestige while the smithy it had to
+  // buy grew 1.6x each time.
+  const PRESTIGE_ZENNY = 0.50;
   // Each climb is longer than the last: every upgrade gains a quarter of its base cap.
   const PRESTIGE_LEVELS = 0.25;
 
@@ -416,9 +421,14 @@ window.FARM = (function () {
     return true;
   }
 
+  // Rank is gated on hunts, but the ore ladder is gated on how far through an upgrade
+  // you are — and those caps grow 25% per prestige. Left fixed, rank raced further ahead
+  // every climb: G Rank always arrived at hunt 100, while leaving Iron Ore went from
+  // Sharpness Lv5 of 60 to Lv8 of 90. The gates now grow with the caps.
+  const rankKills = i => Math.round(RANKS[i].kills * (1 + prestige() * PRESTIGE_LEVELS));
   function rankIndex() {
     let r = 0;
-    for (let i = 0; i < RANKS.length; i++) if (state.kills >= RANKS[i].kills) r = i;
+    for (let i = 0; i < RANKS.length; i++) if (state.kills >= rankKills(i)) r = i;
     return r;
   }
   const rankName = () => RANKS[rankIndex()].name;
@@ -437,6 +447,9 @@ window.FARM = (function () {
   const autoClicks = () => lvl("hunters");        // attacks per second
   const dropCount = () => Math.round((1 + lvl("drop")) * dropMult());
   const zennyMult = () => 1 + lvl("zenny") * 0.15;
+  // Kept apart from zennyMult so the Crazy Lucky Cat readout stays a report on the
+  // skill rather than a blend of the skill and your prestige count.
+  const moneyMult = () => 1 + prestige() * PRESTIGE_ZENNY;
   const oreBonus = () => lvl("luck");             // extra ore on every haul
 
   // Pick the next Brachydios from everything this rank has unlocked.
@@ -510,7 +523,7 @@ window.FARM = (function () {
     const firstOfItsKind = !state.seen[v.id];
     state.seen[v.id] = true;
     state.kills++;
-    const pay = Math.round(worth * 0.38 * zennyMult());
+    const pay = Math.round(worth * 0.38 * zennyMult() * moneyMult());
     state.zenny += pay;
 
     const ores = rollOres(v);
@@ -754,8 +767,8 @@ window.FARM = (function () {
     zennyCost, oreCost,
     get state() { return state; },
     rankIndex, rankName, variant, hpMax, hasSeen, upgradeName, maxLevel,
-    prestige, dropMult, damageMult, canPrestige, doPrestige,
-    PRESTIGE_DROP, PRESTIGE_DAMAGE, PRESTIGE_LEVELS,
+    prestige, dropMult, damageMult, moneyMult, rankKills, canPrestige, doPrestige,
+    PRESTIGE_DROP, PRESTIGE_DAMAGE, PRESTIGE_ZENNY, PRESTIGE_LEVELS,
     rollDrops,        // exported so the rank gate on charm rarity can be tested
     clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, oreBonus, lvl,
   };

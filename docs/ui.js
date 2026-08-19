@@ -74,8 +74,9 @@ window.UI = (function () {
     $("prestigePill").classList.toggle("hidden", p === 0);
     $("prestigePillCount").textContent = p;
     $("prestigePill").title = p
-      ? `Prestige ${p} — +${Math.round((F.dropMult() - 1) * 100)}% charms and ` +
-        `+${Math.round((F.damageMult() - 1) * 100)}% damage, permanently.`
+      ? `Prestige ${p} — +${Math.round((F.dropMult() - 1) * 100)}% charms, ` +
+        `+${Math.round((F.damageMult() - 1) * 100)}% damage and ` +
+        `+${Math.round((F.moneyMult() - 1) * 100)}% zenny, permanently.`
       : "";
 
     const img = $("targetImg");
@@ -261,11 +262,14 @@ window.UI = (function () {
     const left = levelled.filter(u => F.lvl(u.id) < F.maxLevel(u)).length;
     if (!p && !levelled.some(u => F.lvl(u.id) > 0)) return "";
 
-    const gains = `+${Math.round((F.dropMult() - 1) * 100)}% charms and ` +
-      `+${Math.round((F.damageMult() - 1) * 100)}% damage`;
+    const gains = `+${Math.round((F.dropMult() - 1) * 100)}% charms, ` +
+      `+${Math.round((F.damageMult() - 1) * 100)}% damage, ` +
+      `+${Math.round((F.moneyMult() - 1) * 100)}% zenny`;
     const next = `Next: +${Math.round(F.PRESTIGE_DROP * 100)}% charms, ` +
-      `+${Math.round(F.PRESTIGE_DAMAGE * 100)}% damage, and every upgrade gains ` +
-      `${Math.round(F.PRESTIGE_LEVELS * 100)}% more levels to climb.`;
+      `+${Math.round(F.PRESTIGE_DAMAGE * 100)}% damage, ` +
+      `+${Math.round(F.PRESTIGE_ZENNY * 100)}% zenny, and every upgrade gains ` +
+      `${Math.round(F.PRESTIGE_LEVELS * 100)}% more levels — with the rank gates moving ` +
+      `out to match.`;
     const head = p ? `Prestige ${p} — ${gains}` : "Prestige";
 
     if (left) {

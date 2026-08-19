@@ -507,7 +507,7 @@
       askConfirm(`Prestige ${n}?`,
         "Your upgrades, zenny, ore and rank all go back to the start. Your charm box, " +
         "god charms, unlocked themes and the four hires are kept. In exchange every " +
-        "run from here drops more charms and hits harder.",
+        "run from here drops more charms, hits harder and pays better.",
         () => {
           if (!FARM.doPrestige()) return;
           UI.renderAll();
