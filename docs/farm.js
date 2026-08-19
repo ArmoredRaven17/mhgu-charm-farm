@@ -177,29 +177,29 @@ window.FARM = (function () {
     // that low, and without it the most common drop in the game would never be asked
     // for by anything.
     { id: "dmg", name: "Sharpness", levelled: true, desc: "+1 damage per click",
-      base: 20, mult: 1.21, max: 60, ore: 0 },
+      target: 9000000, max: 60, ore: 0 },
     { id: "crit", name: "Critical Eye", levelled: true, desc: "+2% critical chance",
-      base: 7284, mult: 1.28, max: 20, ore: 3 },
+      target: 3600000, max: 20, ore: 3 },
     { id: "critdmg", name: "Crit Boost", levelled: true, desc: "+0.25x critical damage",
-      base: 15036, mult: 1.31, max: 16, ore: 4 },
+      target: 3600000, max: 16, ore: 4 },
     // nameAfter: what the entry is called once you own at least one level. The first
     // purchase is the hire; everything after it is kitting them out.
     { id: "dps", name: "Hire a Palico", nameAfter: "Upgrade Palico Gear",
       desc: "+2 damage per second, hands-free",
-      base: 95, mult: 1.22, max: 50, ore: 3 },
+      target: 9000000, max: 50, ore: 3 },
     // Distinct from a Palico on purpose: a Palico adds flat damage per second, a
     // hired hunter throws a real attack — so these scale with your click damage and
     // can crit. Late on they're worth far more than raw DPS, which is why they cost
     // more and cap lower.
     { id: "hunters", name: "Hunters for Hire", nameAfter: "Upgrade Hunters for Hire Gear",
       desc: "+1 attack per second, using your click damage",
-      base: 3425, mult: 1.26, max: 30, ore: 6 },
+      target: 13500000, max: 30, ore: 6 },
     { id: "zenny", name: "Crazy Lucky Cat", levelled: true, desc: "+15% zenny per kill",
-      base: 49798, mult: 1.36, max: 12, ore: 5 },
+      target: 5400000, max: 12, ore: 5 },
     // The supply side of the smithy: every other upgrade spends ore, this one earns it.
     // Named after the MHGU skill that adds reward slots, which is the same idea.
     { id: "luck", name: "Good Luck", levelled: true, desc: "+1 ore from every hunt",
-      base: 49798, mult: 1.36, max: 12, ore: 4 },
+      target: 5400000, max: 12, ore: 4 },
 
     // The steep 3.2x is deliberate — each level is a flat multiplier on every charm
     // you'll ever get — but the 40,000 base it was raised to in the cost rebalance
@@ -207,7 +207,7 @@ window.FARM = (function () {
     // entirely across a whole session. The steepness is what makes it a long goal;
     // the base only decides whether you can start.
     { id: "drop", name: "Charm Chaser", levelled: true, desc: "+1 charm per kill",
-      base: 32900, mult: 1.51, max: 12, ore: 8 },
+      target: 9000000, max: 12, ore: 8 },
 
     // The two hires. One-offs, priced to be the thing you save for rather than
     // something you drift into: each wants a stack of a G-rank ore, and Ultimas
@@ -304,8 +304,31 @@ window.FARM = (function () {
       qty: 1 + Math.round(progress * (ORE_QTY_TOP - 1)),
     };
   }
+  // What a level costs.
+  //
+  // Two things are chosen here, and the per-level multiplier falls out of them rather
+  // than being set by hand:
+  //
+  //   COST_SPREAD  how many times dearer the LAST level is than the first. Fixing the
+  //                spread instead of the rate is what keeps a 60-level upgrade and a
+  //                12-level one feeling alike. A flat rate applied to both put 94% of
+  //                Sharpness's entire cost in its last fifteen levels, because a rate
+  //                that is mild over twelve levels is savage over sixty.
+  //
+  //   COST_CLIMB   how much dearer a whole climb is than the one before it. The base is
+  //                re-solved from this at the CURRENT cap, so growing the cap at each
+  //                prestige lengthens the climb without detonating the top of it.
+  //                Left to compound, a climb cost 58M, then 441M, then 4.7B, then 68B —
+  //                7x to 14x per prestige against rewards that only grow by half.
+  const COST_SPREAD = 60;
+  const COST_CLIMB = 1.6;
   function zennyCost(up, level) {
-    return Math.round(up.base * Math.pow(up.mult, level));
+    if (up.hire) return up.base;              // one-off, bought once, never rescaled
+    const n = maxLevel(up);
+    const mult = Math.pow(COST_SPREAD, 1 / Math.max(1, n - 1));
+    const target = up.target * Math.pow(COST_CLIMB, prestige());
+    const base = target * (mult - 1) / (Math.pow(mult, n) - 1);
+    return Math.round(base * Math.pow(mult, level));
   }
 
   // ── State ────────────────────────────────────────────────────────────────────
