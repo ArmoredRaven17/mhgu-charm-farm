@@ -65,9 +65,16 @@ window.BOX = (function () {
 
   // Returns how many actually landed — the caller reports the shortfall rather than
   // silently dropping charms on the floor.
+  // A god charm goes in first. The box fills up and the rest of a hunt's drops are
+  // lost, and losing the one charm the whole app is about because it happened to sit
+  // late in the array is the worst possible way to lose it.
   function add(charms) {
+    const isGod = window.ROLL.isGod;
+    const order = charms.some(isGod)
+      ? charms.slice().sort((a, b) => (isGod(b) ? 1 : 0) - (isGod(a) ? 1 : 0))
+      : charms;
     let placed = 0;
-    for (const c of charms) {
+    for (const c of order) {
       const i = firstEmpty();
       if (i < 0) break;
       box[i] = c;

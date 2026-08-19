@@ -442,7 +442,13 @@
 
       // A god charm outranks every other thing the hunt could tell you about. Worth
       // surfacing even from an offline haul, so it's recorded rather than skipped.
-      const god = res.charms.find(ROLL.isGod) || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
+      // Only a god charm that actually made it into the box counts. The tally used to
+      // read straight off the hunt's drops, so one lost to a full box still bumped the
+      // counter — which is how 25 found could mean 21 held. BOX.add now puts a god in
+      // first so this should never fire, but the counter should be honest either way.
+      const dropped = res.charms.find(ROLL.isGod);
+      const god = (dropped && BOX.indexOf(dropped) >= 0 ? dropped : null)
+        || (meld && ROLL.isGod(meld.charm) ? meld.charm : null);
       // Tallied and stamped here rather than when the message is built, so one that
       // drops during a replayed absence reports the hunt count it actually fell at
       // instead of the total after the whole catch-up.
