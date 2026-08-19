@@ -148,7 +148,25 @@ window.BOX = (function () {
       name: (a, b) => window.ROLL.treeName(a.k[0][0]).localeCompare(window.ROLL.treeName(b.k[0][0])),
     }[key];
     if (!cmp) return;
-    filled.sort((a, b) => sign * cmp(a, b));
+    // God charms sort as their own block, in discovery order, ahead of everything else.
+    //
+    // Two reasons they can't just fall through to the chosen key. By definition a god charm
+    // is a Creator with three slots and both skills at the top of their range, so every god
+    // charm TIES every other one under rarity, slots, value and skill — which is why their
+    // order looked arbitrary before. And under `name` they'd scatter across the box by first
+    // skill, which is the one thing you never want of the charms you actually farmed for.
+    //
+    // 1 -> N regardless of direction: the number is a trophy count, not a measurement, so
+    // reversing it reads as wrong rather than as descending. Charms found before numbering
+    // existed carry no `g`; they trail the numbered ones instead of leading them.
+    const isGod = window.ROLL.isGod;
+    const godNo = c => (c.g || Infinity);
+    filled.sort((a, b) => {
+      const ga = isGod(a), gb = isGod(b);
+      if (ga !== gb) return ga ? -1 : 1;
+      if (ga) return godNo(a) - godNo(b);
+      return sign * cmp(a, b);
+    });
     box = filled.concat(new Array(BOX_SIZE - filled.length).fill(null));
     touched();
   }

@@ -4,8 +4,9 @@
     {
       "name": "charm-farm",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8132", "--directory", "docs"],
-      "port": 8132
+      "runtimeArgs": ["-c", "import os,functools,http.server as h;h.test(functools.partial(h.SimpleHTTPRequestHandler,directory='docs'),port=int(os.environ.get(\"PORT\",8132)))"],
+      "port": 8132,
+      "autoPort": true
     }
   ]
 }
