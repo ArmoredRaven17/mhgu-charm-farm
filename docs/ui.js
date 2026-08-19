@@ -805,11 +805,14 @@ window.UI = (function () {
   // Junk ≤, and Maximeld can pull it straight back into the pot — in which case the
   // caller hands us -1. Math.floor(-1 / 100) is -1, not 0, so that used to set the
   // page negative and the indicator read "Page 0". Nothing to flash, so nothing to do.
+  // Highlight a charm that has just arrived — but never move the page to find it.
+  // Jumping the box out from under you mid-hunt loses your place, and with Maximeld
+  // XIV melding after every kill it happens constantly. If the new charm isn't on the
+  // page you're looking at, it simply isn't shown; it's still there when you get to it.
   function flashFresh(flat) {
     if (!Number.isInteger(flat) || flat < 0 || flat >= window.BOX.BOX_SIZE) return;
-    const p = Math.floor(flat / window.BOX.PAGE);
-    if (p !== page) page = p;
-    const i = flat - p * window.BOX.PAGE;
+    if (Math.floor(flat / window.BOX.PAGE) !== page) return;
+    const i = flat - page * window.BOX.PAGE;
     renderGrid();
     const cell = cells[i];
     if (!cell) return;
