@@ -65,9 +65,24 @@ window.BOX = (function () {
 
   // Returns how many actually landed — the caller reports the shortfall rather than
   // silently dropping charms on the floor.
-  // A god charm goes in first. The box fills up and the rest of a hunt's drops are
-  // lost, and losing the one charm the whole app is about because it happened to sit
-  // late in the array is the worst possible way to lose it.
+  // The cheapest charm in the box that isn't a god charm — what gets thrown overboard
+  // when a god charm arrives at a full box. -1 when there is nothing to give up, which
+  // only happens if all 2000 slots are already god charms.
+  function worstNonGod() {
+    let idx = -1, worst = Infinity;
+    for (let i = 0; i < BOX_SIZE; i++) {
+      const c = box[i];
+      if (!c || window.ROLL.isGod(c)) continue;
+      const v = window.ROLL.charmValue(c);
+      if (v < worst) { worst = v; idx = i; }
+    }
+    return idx;
+  }
+
+  // A god charm goes in first, and if the box is full it takes the place of the least
+  // valuable ordinary charm rather than being lost. Losing the one charm the whole app
+  // is about — because the box happened to be full, or because it sat late in the
+  // hunt's drops — is the worst possible way to lose it. Everything else still spills.
   function add(charms) {
     const isGod = window.ROLL.isGod;
     const order = charms.some(isGod)
@@ -75,7 +90,8 @@ window.BOX = (function () {
       : charms;
     let placed = 0;
     for (const c of order) {
-      const i = firstEmpty();
+      let i = firstEmpty();
+      if (i < 0 && isGod(c)) i = worstNonGod();
       if (i < 0) break;
       box[i] = c;
       placed++;
