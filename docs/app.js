@@ -253,6 +253,7 @@
   const state = {
     confirmBulk: settings.confirmBulk !== false,
     junkMax: settings.junkMax || 2,
+    meldMin: settings.meldMin || 1,
     autoSort: !!settings.autoSort,
     sortKey: settings.sortKey || "",
     sortDir: settings.sortDir === "asc" ? "asc" : "desc",
@@ -359,7 +360,7 @@
 
       // Maximeld XIV reloads the pot once the hunt's drops are in, so the row that
       // just resolved is refilled from whatever the kill produced.
-      if (hireOn("maximeld")) BOX.autoFill();
+      if (hireOn("maximeld")) BOX.autoFill(state.meldMin);
 
       // Neko clears out junk. She reads the same "Junk ≤" dropdown the Sell Junk
       // button uses, so hiring her doesn't add a control — it just stops you pressing
@@ -519,6 +520,7 @@
 
   // These live in the toolbar, so set them after initEvents has bound them.
   UI.setJunkMax(state.junkMax);
+  UI.setMeldMin(state.meldMin);
   UI.setAutoSort(state.autoSort);
   UI.setHiresPaused(state.hiresPaused);
   UI.setSortDir(state.sortDir);

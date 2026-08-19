@@ -242,12 +242,16 @@ window.BOX = (function () {
   // every row. Maximeld XIV calls this after every single hunt, so the old shape was
   // doing twenty thousand slot reads per kill — and a replayed absence made that
   // visible as a ten-second freeze on load.
-  function autoFill() {
+  // `minRarity` is the floor the player sets: anything below it is left in the box
+  // rather than fed to the pot. Maximeld XIV and the Auto-fill button both come through
+  // here, so the setting governs the hire and the manual press alike.
+  function autoFill(minRarity) {
+    const floor = Math.min(10, Math.max(1, Number(minRarity) || 1));
     let loaded = 0;
     const byRarity = {};
     for (let i = 0; i < BOX_SIZE; i++) {
       const c = box[i];
-      if (!c || window.ROLL.isGod(c)) continue;
+      if (!c || c.r < floor || window.ROLL.isGod(c)) continue;
       (byRarity[c.r] = byRarity[c.r] || []).push(i);
     }
     // Best rarity first — melding up from a high rarity is worth more than from a low.

@@ -461,7 +461,11 @@ kbd{
 .pot-queue.blocked{background:#3a1d1d;border-color:#7a3f3f;color:#e8a0a0}
 .pot-queue.idle{opacity:0}
 .pot-status{font-size:11px;opacity:.7;min-height:30px;padding:6px 14px 2px;line-height:1.4}
-.pot-actions{display:flex;gap:6px;padding:0 12px;flex-wrap:wrap}
+.pot-actions{display:flex;gap:6px;padding:0 12px;flex-wrap:wrap;align-items:center}
+/* The row wraps in a 300px column, so the rarity floor and its label travel as one
+   piece — a label stranded at the end of one line with its dropdown on the next
+   reads as two unrelated controls. */
+.pot-filter{display:inline-flex;align-items:center;gap:5px}
 
 /* ── Detail ──────────────────────────────────────────────────────────── */
 /* Docked to the top of the pot column, so the pot scrolls beneath it while the charm

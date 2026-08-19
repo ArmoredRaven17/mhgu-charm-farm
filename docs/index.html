@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHGU Charm Farm</title>
 <link rel="icon" type="image/png" href="assets/icons/icon_talisman_r8.png">
-<link rel="stylesheet" href="styles.css?v=30">
+<link rel="stylesheet" href="styles.css?v=31">
 </head>
 <body>
 <div id="app">
@@ -139,6 +139,21 @@
         <button id="autoFillBtn" class="nav-btn" title="Load rows from whatever you have three of">Auto-fill</button>
         <button id="emptyPotBtn" class="nav-btn" title="Send every charm in the pot back to the box">Empty Pot</button>
         <button id="costBtn" class="nav-btn" title="What each meld costs">Costs</button>
+        <span class="pot-filter">
+        <label for="meldMin" class="nav-label">Meld &ge;</label>
+        <select id="meldMin" class="mini-select" title="Lowest rarity Auto-fill and Maximeld XIV will feed to the pot">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+        </span>
       </div>
       <div class="pot-status" id="potStatus"></div>
       <div class="pot" id="pot"></div>
@@ -396,8 +411,8 @@
 <script src="data/ores.js?v=1"></script>
 <script src="roll.js?v=6"></script>
 <script src="farm.js?v=35"></script>
-<script src="box.js?v=10"></script>
-<script src="ui.js?v=37"></script>
-<script src="app.js?v=32"></script>
+<script src="box.js?v=11"></script>
+<script src="ui.js?v=38"></script>
+<script src="app.js?v=34"></script>
 </body>
 </html>

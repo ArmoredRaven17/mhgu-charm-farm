@@ -26,6 +26,7 @@ window.UI = (function () {
   let sortDir = "desc";
   let confirmBulk = true;
   let junkMax = 2;          // highest rarity Sell Junk will take
+  let meldMin = 1;          // lowest rarity Auto-fill and Maximeld XIV will pot
   let autoSort = false;     // re-apply the chosen sort after every hunt
   let hiresPaused = {};     // hire id -> true when stood down
   let oreMode = "sell";     // the ore strip doubles as the shop: "sell" or "buy"
@@ -763,9 +764,20 @@ window.UI = (function () {
     // and Sell Junk does the same job while giving you the zenny. Reset Run still
     // clears the box, which is the one place wiping it is actually the intent.
     $("autoFillBtn").addEventListener("click", () => {
-      const n = window.BOX.autoFill();
-      toast(n ? `Filled ${n} row${n === 1 ? "" : "s"}.` : "No rarity has three spare charms.");
+      const n = window.BOX.autoFill(meldMin);
+      toast(n ? `Filled ${n} row${n === 1 ? "" : "s"}.`
+              : meldMin > 1
+                ? `No rarity ${meldMin} or better has three spare charms.`
+                : "No rarity has three spare charms.");
       renderAll();
+    });
+    // The floor the pot will accept. Governs Maximeld XIV as well as this button, so
+    // standing him on is not a commitment to melding away every Pawn Talisman.
+    const meldSel = $("meldMin");
+    meldSel.value = String(meldMin);
+    meldSel.addEventListener("change", () => {
+      meldMin = Number(meldSel.value) || 1;
+      hooks.settingChanged("meldMin", meldMin);
     });
     $("emptyPotBtn").addEventListener("click", () => {
       if (!window.BOX.emptyPot()) return toast("The box is too full to take everything back.");
@@ -849,6 +861,11 @@ window.UI = (function () {
     const sel = $("junkRarity");
     if (sel) sel.value = String(junkMax);
   };
+  const setMeldMin = v => {
+    meldMin = Math.min(10, Math.max(1, Number(v) || 1));
+    const sel = $("meldMin");
+    if (sel) sel.value = String(meldMin);
+  };
   const clearSelection = () => { selected = -1; };
 
   return {
@@ -857,7 +874,7 @@ window.UI = (function () {
     set oreMode(v) { oreMode = v === "buy" ? "buy" : "sell"; },
     get oreMode() { return oreMode; },
     showHit, flashFresh,
-    setConfirmBulk, setJunkMax, setAutoSort, setHiresPaused, setSortKey, setSortDir,
+    setConfirmBulk, setJunkMax, setMeldMin, setAutoSort, setHiresPaused, setSortKey, setSortDir,
     maybeAutoSort,
     clearSelection, hideTip, esc,
     get page() { return page; },
