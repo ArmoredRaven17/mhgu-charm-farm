@@ -359,6 +359,11 @@ window.FARM = (function () {
   let onPalicoHit = () => {};
   let timer = null;
   let autoCarry = 0;      // fractional auto-attacks owed between ticks
+  // Paused stops the farm dead — no Palico damage, no hired attacks, and clicks do
+  // nothing either. Anything less would still be 'running in the background', which
+  // is the whole thing being switched off. Offline catch-up is skipped while paused
+  // too, so closing the tab paused and returning later accrues nothing.
+  let paused = false;
   let palicoCarry = 0;    // seconds owed towards the next Palico mark
 
   function fresh() {
@@ -553,6 +558,7 @@ window.FARM = (function () {
   }
 
   function click() {
+    if (paused) return null;
     const crit = Math.random() < critChance();
     return hit(clickDamage() * (crit ? critMult() : 1), crit);
   }
@@ -669,7 +675,7 @@ window.FARM = (function () {
       // single colossal hit (or a thousand queued auto-attacks) all at once.
       const elapsed = Math.min(1, (now - last) / 1000);
       last = now;
-      if (!state) return;
+      if (!state || paused) return;
 
       const d = dps();
       if (d > 0) {
@@ -768,6 +774,7 @@ window.FARM = (function () {
     get state() { return state; },
     rankIndex, rankName, variant, hpMax, hasSeen, upgradeName, maxLevel,
     prestige, dropMult, damageMult, moneyMult, rankKills, canPrestige, doPrestige,
+    setPaused(v) { paused = !!v; }, get paused() { return paused; },
     PRESTIGE_DROP, PRESTIGE_DAMAGE, PRESTIGE_ZENNY, PRESTIGE_LEVELS,
     rollDrops,        // exported so the rank gate on charm rarity can be tested
     clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, oreBonus, lvl,

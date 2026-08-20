@@ -254,6 +254,7 @@
     confirmBulk: settings.confirmBulk !== false,
     junkMax: settings.junkMax || 2,
     meldMin: settings.meldMin || 1,
+    paused: !!settings.paused,
     autoSort: !!settings.autoSort,
     sortKey: settings.sortKey || "",
     sortDir: settings.sortDir === "asc" ? "asc" : "desc",
@@ -300,6 +301,8 @@
   // Replay what the Palicoes and hired hunters did while the tab was shut, then say
   // what happened. Painting is suppressed for the duration and done once at the end.
   function applyOfflineProgress(savedAt) {
+    // A farm left paused earns nothing while you are away — that is what pausing is.
+    if (FARM.paused) return;
     const parsed = Date.parse(savedAt || "");
     if (!parsed) return;
     const away = (Date.now() - parsed) / 1000;
@@ -527,6 +530,7 @@
   // These live in the toolbar, so set them after initEvents has bound them.
   UI.setJunkMax(state.junkMax);
   UI.setMeldMin(state.meldMin);
+  FARM.setPaused(state.paused);
   UI.setAutoSort(state.autoSort);
   UI.setHiresPaused(state.hiresPaused);
   UI.setSortDir(state.sortDir);

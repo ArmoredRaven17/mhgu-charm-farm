@@ -20,6 +20,10 @@ window.UI = (function () {
 
   const oreIcon = id => "assets/OreIcons/" + window.FARM.oreById[id].icon;
   const charmIcon = c => `assets/icons/icon_talisman_r${c.r}.png`;
+  // Slots as the game writes them: three characters, O for a slot and - for none.
+  // Always three wide, so --- / O-- / OO- / OOO line up in a column and a glance tells
+  // you the count without reading a number.
+  const slotText = n => "O".repeat(n) + "-".repeat(3 - n);
 
   let page = 0;
   let selected = -1;        // flat box index of the inspected charm
@@ -69,8 +73,18 @@ window.UI = (function () {
     const F = window.FARM, v = F.variant(), s = F.state;
     $("arenaName").textContent = v.name;
     const p = F.prestige();
-    $("arenaRank").textContent = `${F.rankName()} · ${s.kills} hunt${s.kills === 1 ? "" : "s"}` +
+    $("arenaRank").textContent = (F.paused ? "Paused · " : "") +
+      `${F.rankName()} · ${s.kills} hunt${s.kills === 1 ? "" : "s"}` +
       (p ? ` · Prestige ${p}` : "");
+    $("target").classList.toggle("paused", F.paused);
+    const pb = $("pauseBtn");
+    if (pb) {
+      pb.innerHTML = F.paused ? "&#9654;" : "&#9208;";
+      pb.title = F.paused ? "Resume the farm" : "Pause the farm";
+      pb.setAttribute("aria-label", pb.title);
+      pb.setAttribute("aria-pressed", F.paused ? "true" : "false");
+      pb.classList.toggle("paused", F.paused);
+    }
     $("prestigePill").classList.toggle("hidden", p === 0);
     $("prestigePillCount").textContent = p;
     $("prestigePill").title = p
@@ -389,9 +403,7 @@ window.UI = (function () {
       return `<div class="tip-row"><span class="k">${esc(window.ROLL.treeName(s[0]))}</span>
         <span class="v ${cls}">${s[1] > 0 ? "+" : ""}${s[1]}</span></div>`;
     }).join("");
-    const pips = c.s > 0
-      ? `<span class="tip-pips">${"<i></i>".repeat(c.s)}</span>${c.s}`
-      : "None";
+    const pips = `<span class="slot-text">${slotText(c.s)}</span>`;
     const god = window.ROLL.isGod(c);
     return `<div class="tip-head">
         <div class="tip-icon"><img src="${charmIcon(c)}" alt=""></div>
@@ -514,7 +526,7 @@ window.UI = (function () {
       <div class="detail-section-title">Charm</div>
       ${row("Rarity", c.r)}
       ${row("Roll table", tier.charAt(0).toUpperCase() + tier.slice(1))}
-      ${row("Slots", c.s)}
+      ${row("Slots", slotText(c.s), "slot-text")}
       ${row("Sells for", window.ROLL.charmValue(c).toLocaleString() + "z")}
       <div class="detail-section-title">Skills</div>`;
     for (const s of c.k || []) {
@@ -671,6 +683,15 @@ window.UI = (function () {
       }
       const gain = window.FARM.sellOre(id, 1);
       if (gain) toast(`Sold for ${gain.toLocaleString()}z.`);
+    });
+
+    $("pauseBtn").addEventListener("click", () => {
+      window.FARM.setPaused(!window.FARM.paused);
+      hooks.settingChanged("paused", window.FARM.paused);
+      toast(window.FARM.paused
+        ? "Paused. Nothing hunts until you resume."
+        : "Back to the hunt.");
+      renderAll();
     });
 
     // Ore strip mode. Persisted like the sort and Junk settings, so the strip is

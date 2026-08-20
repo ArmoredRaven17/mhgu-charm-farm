@@ -156,6 +156,11 @@ kbd{
   transition:transform .06s,filter .12s
 }
 .arena-target:hover{filter:brightness(1.12)}
+/* A paused monster reads as switched off rather than merely idle — the arena line
+   says so too, but the tile is what you are looking at. */
+.arena-target.paused{filter:grayscale(.85) brightness(.6);cursor:default}
+.arena-target.paused:hover{filter:grayscale(.85) brightness(.6)}
+.icon-btn.paused{color:#ffd24a}
 .arena-target:active{transform:scale(.97)}
 /* A Palico or a hired hunter landing a blow should move the tile the same way your own
    click does — :active only fires for a real pointer press, so their attacks left the
@@ -382,6 +387,10 @@ kbd{
   line-height:1.3;text-transform:uppercase;color:#ffd24a;opacity:.72
 }
 .detail-god{text-align:center;margin-bottom:2px}
+/* Slots read as three fixed-width characters, so --- / O-- / OO- / OOO stack into a
+   column you can scan without reading the number. Monospaced, or the O and the -
+   are different widths and the rows stop lining up. */
+.slot-text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
 /* The titlebar tally. Same pill as zenny and capacity so the row stays even, but
    wearing the god charm's gold — it's the one number in the bar you'd brag about. */
 .god-pill{
