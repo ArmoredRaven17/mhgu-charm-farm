@@ -218,7 +218,7 @@ window.FARM = (function () {
     // the dropdown you were already using becomes her instructions.
     { id: "neko", name: "Neko (Means Cat)", hire: true, desc: "Sells junk charms for you, at your Junk ≤ setting",
       base: 2000000, mult: 1, max: 1, ore: 18, oreQty: 12 },
-    { id: "argosy", name: "Argosy Captain", hire: true, desc: "Sells ore no upgrade still needs, plus any surplus",
+    { id: "argosy", name: "Argosy Captain", hire: true, desc: "Sells surplus ores, buys small amounts of needed ones",
       base: 2500000, mult: 1, max: 1, ore: 20, oreQty: 12 },
     // 10 Ultimas rather than 20: the ore ladder caps at Ultimas Crystal, so the late
     // levels of every other upgrade are competing for the same drop. At 20 the
