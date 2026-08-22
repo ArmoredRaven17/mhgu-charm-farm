@@ -230,7 +230,7 @@ window.FARM = (function () {
     // offer to do something you have never seen happen. With this and Kokoto Gal both
     // working, the farm runs its own loop — climb, finish, prestige, climb again.
     { id: "guild", name: "Guild Manager", hire: true, afterPrestige: true,
-      desc: "Prestiges for you as soon as the smithy is finished",
+      desc: "Prestiges for you when the smithy is finished, and lends 1 attack per second",
       base: 6000000, mult: 1, max: 1, ore: 22, oreQty: 20 },
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
@@ -449,7 +449,11 @@ window.FARM = (function () {
   const critChance = () => Math.min(0.5, lvl("crit") * 0.02);
   const critMult = () => 2 + lvl("critdmg") * 0.25;
   const dps = () => Math.round(lvl("dps") * 2 * damageMult());
-  const autoClicks = () => lvl("hunters");        // attacks per second
+  // Attacks per second. The Guild Manager brings one of his own, and because hires
+  // survive a prestige it is the one bit of damage you still have the moment a climb
+  // resets — otherwise the first hunts of every run after the first are back to bare
+  // clicking with nothing working alongside you.
+  const autoClicks = () => lvl("hunters") + (lvl("guild") ? 1 : 0);
   const dropCount = () => Math.round((1 + lvl("drop")) * dropMult());
   const zennyMult = () => 1 + lvl("zenny") * 0.15;
   // Kept apart from zennyMult so the Crazy Lucky Cat readout stays a report on the
