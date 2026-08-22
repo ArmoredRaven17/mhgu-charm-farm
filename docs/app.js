@@ -278,6 +278,12 @@
   // charms; each tells the UI when something moved rather than the UI polling.
   // How much of a still-needed ore the Argosy Captain leaves you. Enough to cover
   // several upgrade levels without hoarding.
+  // ...and a nearly full box puts him back. The pot is the only thing that consumes
+  // charms without selling them, so once the box is within a hundred slots of full he
+  // goes back to work whatever stood him down — a prestige or your own click. Losing
+  // drops to a full box is worse than melding something you meant to keep.
+  const MAXIMELD_RESUME = 100;   // slots free at which he restarts
+
   // Prestige stands Maximeld XIV down. The charm box survives a prestige, so he would
   // otherwise start feeding your kept charms into the pot from the first hunt of a run
   // whose smithy cannot pay the meld fees yet. Stood down rather than switched off for
@@ -372,6 +378,14 @@
       // full box is likelier to have room for the hunt's drops afterwards.
       const meld = BOX.resolveOneMeld();
       const placed = BOX.add(res.charms);
+
+      if (FARM.lvl("maximeld") && state.hiresPaused.maximeld &&
+          BOX.count() >= BOX.BOX_SIZE - MAXIMELD_RESUME) {
+        state.hiresPaused = Object.assign({}, state.hiresPaused, { maximeld: false });
+        UI.setHiresPaused(state.hiresPaused);
+        persistSettings();
+        if (!quiet) toast(`Box nearly full — Maximeld XIV is back at the pot.`, 3600, true);
+      }
 
       // Maximeld XIV reloads the pot once the hunt's drops are in, so the row that
       // just resolved is refilled from whatever the kill produced.
