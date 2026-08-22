@@ -230,7 +230,7 @@ window.FARM = (function () {
     // offer to do something you have never seen happen. With this and Kokoto Gal both
     // working, the farm runs its own loop — climb, finish, prestige, climb again.
     { id: "guild", name: "Guild Manager", hire: true, afterPrestige: true,
-      desc: "Prestiges for you when the smithy is finished, and lends 1 attack per second",
+      desc: "Prestiges for you when the smithy is finished, and lends 1 attack per second per Prestige",
       base: 6000000, mult: 1, max: 1, ore: 22, oreQty: 20 },
   ];
   const upgradeById = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
@@ -449,11 +449,15 @@ window.FARM = (function () {
   const critChance = () => Math.min(0.5, lvl("crit") * 0.02);
   const critMult = () => 2 + lvl("critdmg") * 0.25;
   const dps = () => Math.round(lvl("dps") * 2 * damageMult());
-  // Attacks per second. The Guild Manager brings one of his own, and because hires
-  // survive a prestige it is the one bit of damage you still have the moment a climb
-  // resets — otherwise the first hunts of every run after the first are back to bare
-  // clicking with nothing working alongside you.
-  const autoClicks = () => lvl("hunters") + (lvl("guild") ? 1 : 0);
+  // Attacks per second. The Guild Manager brings his own, and because hires survive a
+  // prestige they are the one bit of damage still working the moment a climb resets.
+  //
+  // One per prestige rather than a flat one: he first appears at Prestige 1, so he
+  // starts at a single attack, but by Prestige 6 a lone attack against a smithy that
+  // resets six times over is no head start at all. Scaling him means the higher you
+  // climb the less the reset costs you, which is what a prestige is supposed to buy.
+  const guildClicks = () => (lvl("guild") ? Math.max(1, prestige()) : 0);
+  const autoClicks = () => lvl("hunters") + guildClicks();
   const dropCount = () => Math.round((1 + lvl("drop")) * dropMult());
   const zennyMult = () => 1 + lvl("zenny") * 0.15;
   // Kept apart from zennyMult so the Crazy Lucky Cat readout stays a report on the
@@ -781,6 +785,6 @@ window.FARM = (function () {
     setPaused(v) { paused = !!v; }, get paused() { return paused; },
     PRESTIGE_DROP, PRESTIGE_DAMAGE, PRESTIGE_ZENNY, PRESTIGE_LEVELS,
     rollDrops,        // exported so the rank gate on charm rarity can be tested
-    clickDamage, critChance, critMult, dps, autoClicks, dropCount, zennyMult, oreBonus, lvl,
+    clickDamage, critChance, critMult, dps, autoClicks, guildClicks, dropCount, zennyMult, oreBonus, lvl,
   };
 })();
