@@ -288,6 +288,17 @@
   // otherwise start feeding your kept charms into the pot from the first hunt of a run
   // whose smithy cannot pay the meld fees yet. Stood down rather than switched off for
   // good — click him in the smithy when you want the pot working again.
+  // A prestige clears the box out, keeping the god charms — sellable() already refuses
+  // those, so "sell everything" cannot touch the collection. The proceeds land in the
+  // new run's empty wallet, which is where they are worth most.
+  //
+  // Without this, standing Maximeld down achieves nothing: you almost always prestige
+  // with a near-full box, so he would be back at the pot within a hunt or two on the
+  // 1900-slot rule and the fresh run would start melding immediately.
+  function cashOutOnPrestige() {
+    return BOX.sellWhere(() => true);
+  }
+
   function standDownMaximeld() {
     if (!FARM.lvl("maximeld") || state.hiresPaused.maximeld) return false;
     state.hiresPaused = Object.assign({}, state.hiresPaused, { maximeld: true });
@@ -434,11 +445,13 @@
       if (!quiet && hireOn("guild") && FARM.canPrestige()) {
         const n = FARM.prestige() + 1;
         if (FARM.doPrestige()) {
+          const sale = cashOutOnPrestige();
           const stood = standDownMaximeld();
           UI.renderAll();
           BOX.markDirty();
           toast(`The Guild Manager filed for Prestige ${n}. Back to Low Rank — and you hit harder.` +
-            (stood ? " Maximeld XIV is stood down." : ""), 4200, true);
+            (sale.count ? ` Sold ${sale.count.toLocaleString()} charms for ${sale.zenny.toLocaleString()}z.` : "") +
+            (stood ? " Maximeld XIV is stood down." : ""), 5200, true);
         }
       }
 
@@ -541,16 +554,19 @@
       if (!FARM.canPrestige()) return;
       const n = FARM.prestige() + 1;
       askConfirm(`Prestige ${n}?`,
-        "Your upgrades, zenny, ore and rank all go back to the start. Your charm box, " +
-        "god charms, unlocked themes and the four hires are kept. In exchange every " +
-        "run from here drops more charms, hits harder and pays better.",
+        "Your upgrades, zenny, ore and rank all go back to the start, and your charm box " +
+        "is sold off — the money goes into the new run. God charms are never sold, and " +
+        "your unlocked themes and every hire are kept. In exchange every run from here " +
+        "drops more charms, hits harder and pays better.",
         () => {
           if (!FARM.doPrestige()) return;
+          const sale = cashOutOnPrestige();
           const stood = standDownMaximeld();
           UI.renderAll();
           BOX.markDirty();
           toast(`Prestige ${n}. The smithy is empty again — and you hit a lot harder.` +
-            (stood ? " Maximeld XIV is stood down." : ""), 4200, true);
+            (sale.count ? ` Sold ${sale.count.toLocaleString()} charms for ${sale.zenny.toLocaleString()}z.` : "") +
+            (stood ? " Maximeld XIV is stood down." : ""), 5200, true);
         });
     },
     settingChanged: (key, value) => { state[key] = value; persistSettings(); },
