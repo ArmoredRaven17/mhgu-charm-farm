@@ -278,6 +278,18 @@
   // charms; each tells the UI when something moved rather than the UI polling.
   // How much of a still-needed ore the Argosy Captain leaves you. Enough to cover
   // several upgrade levels without hoarding.
+  // Prestige stands Maximeld XIV down. The charm box survives a prestige, so he would
+  // otherwise start feeding your kept charms into the pot from the first hunt of a run
+  // whose smithy cannot pay the meld fees yet. Stood down rather than switched off for
+  // good — click him in the smithy when you want the pot working again.
+  function standDownMaximeld() {
+    if (!FARM.lvl("maximeld") || state.hiresPaused.maximeld) return false;
+    state.hiresPaused = Object.assign({}, state.hiresPaused, { maximeld: true });
+    UI.setHiresPaused(state.hiresPaused);
+    persistSettings();
+    return true;
+  }
+
   const ARGOSY_RESERVE = 60;
   // How close an upgrade must be to its ore requirement before the Argosy Captain
   // will buy the difference. Small on purpose: ore buys at ten times what it sells
@@ -408,10 +420,11 @@
       if (!quiet && hireOn("guild") && FARM.canPrestige()) {
         const n = FARM.prestige() + 1;
         if (FARM.doPrestige()) {
+          const stood = standDownMaximeld();
           UI.renderAll();
           BOX.markDirty();
-          toast(`The Guild Manager filed for Prestige ${n}. Back to Low Rank — and you hit harder.`,
-            4200, true);
+          toast(`The Guild Manager filed for Prestige ${n}. Back to Low Rank — and you hit harder.` +
+            (stood ? " Maximeld XIV is stood down." : ""), 4200, true);
         }
       }
 
@@ -519,9 +532,11 @@
         "run from here drops more charms, hits harder and pays better.",
         () => {
           if (!FARM.doPrestige()) return;
+          const stood = standDownMaximeld();
           UI.renderAll();
           BOX.markDirty();
-          toast(`Prestige ${n}. The smithy is empty again — and you hit a lot harder.`, 4200, true);
+          toast(`Prestige ${n}. The smithy is empty again — and you hit a lot harder.` +
+            (stood ? " Maximeld XIV is stood down." : ""), 4200, true);
         });
     },
     settingChanged: (key, value) => { state[key] = value; persistSettings(); },
